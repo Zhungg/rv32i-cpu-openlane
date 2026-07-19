@@ -1,0 +1,45 @@
+# Simulation outputs
+*.vcd
+*.fst
+*.lxt
+*.lxt2
+*.wlf
+*.ghw
+*.log
+*.jou
+*.dat
+*.out
+*.vvp
+*.exe
+obj_dir/
+sim_build/
+
+# Python/cache
+__pycache__/
+*.pyc
+.venv/
+
+# Synthesis/STA temporary outputs
+synth/yosys/work/*
+!synth/yosys/work/.gitkeep
+sta/opensta/work/*
+!sta/opensta/work/.gitkeep
+
+# OpenLane 2 generated run contents
+# OpenLane creates: openlane/<design>/runs/RUN_<timestamp>/
+openlane/*/runs/*
+!openlane/*/runs/.gitkeep
+
+# Reports generated locally
+reports/**/*.tmp
+
+# Editor/OS
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Build artifacts
+build/
+dist/

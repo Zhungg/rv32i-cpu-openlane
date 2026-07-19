@@ -1,0 +1,25 @@
+field,if_id,id_ex,ex_mem,mem_wb,purpose
+pc,IF_ID,ID_EX,EX_MEM,MEM_WB,Instruction PC
+insn,IF_ID,ID_EX,EX_MEM,MEM_WB,Raw instruction for trace/trap
+pc_plus_4,IF_ID,ID_EX,EX_MEM,MEM_WB,Sequential next PC/link value
+exception,IF_ID,ID_EX,EX_MEM,MEM_WB,Precise exception metadata
+pred_taken,IF_ID,ID_EX,EX_MEM,MEM_WB,Prediction direction
+pred_target,IF_ID,ID_EX,EX_MEM,MEM_WB,Prediction target
+pred_next_pc,IF_ID,ID_EX,EX_MEM,MEM_WB,Predicted next PC
+pht_index,IF_ID,ID_EX,EX_MEM,MEM_WB,Prediction-time PHT index
+ghr_snapshot,IF_ID,ID_EX,EX_MEM,MEM_WB,Prediction-time history
+rs1_addr,,ID_EX,EX_MEM,MEM_WB,Source register 1 index
+rs2_addr,,ID_EX,EX_MEM,MEM_WB,Source register 2 index
+rs1_value,,ID_EX,EX_MEM,MEM_WB,Architectural source value for RVFI
+rs2_value,,ID_EX,EX_MEM,MEM_WB,Architectural source value for RVFI
+rd_addr,,ID_EX,EX_MEM,MEM_WB,Destination index
+decoded_op,,ID_EX,EX_MEM,MEM_WB,Typed internal operation
+immediate,,ID_EX,EX_MEM,,Decoded immediate
+control_bundle,,ID_EX,EX_MEM,MEM_WB,Writeback/memory/CSR/system controls
+alu_or_addr_result,,,EX_MEM,MEM_WB,ALU result or effective address
+store_data,,,EX_MEM,MEM_WB,Final forwarded store data
+actual_next_pc,,,EX_MEM,MEM_WB,Resolved next PC
+branch_outcome,,,EX_MEM,MEM_WB,Actual taken/target/mispredict
+csr_old_new,,,EX_MEM,MEM_WB,CSR RMW values
+mem_masks_data,,,,MEM_WB,RVFI memory address/masks/data
+final_wb_data,,,,MEM_WB,Final GPR write value

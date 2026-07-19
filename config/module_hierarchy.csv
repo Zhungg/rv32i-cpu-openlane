@@ -1,0 +1,35 @@
+module,planned_path,kind,responsibility,status
+rv32i_core,rtl/core/rv32i_core.sv,stateful integration,Top-level core integration and external interfaces,required
+rv32i_reset_sync,rtl/infrastructure/rv32i_reset_sync.sv,stateful,"Async assert, sync deassert reset",required
+rv32i_fetch_unit,rtl/frontend/rv32i_fetch_unit.sv,stateful,"PC, imem tracker, fetch epoch and fetch buffer",required
+rv32i_bpu,rtl/frontend/rv32i_bpu.sv,stateful integration,Prediction selection and training dispatch,required
+rv32i_btb,rtl/frontend/rv32i_btb.sv,stateful,64-entry direct-mapped target buffer,required
+rv32i_pht,rtl/frontend/rv32i_pht.sv,stateful,256-entry 2-bit predictor table,required
+rv32i_ghr,rtl/frontend/rv32i_ghr.sv,stateful,8-bit committed branch history,required
+rv32i_ras,rtl/frontend/rv32i_ras.sv,stateful,8-entry return-address stack,required
+rv32i_decoder,rtl/decode/rv32i_decoder.sv,combinational,Strict instruction decode and legality,required
+rv32i_imm_gen,rtl/decode/rv32i_imm_gen.sv,combinational,Immediate reconstruction,required
+rv32i_regfile,rtl/decode/rv32i_regfile.sv,stateful,32x32 2R1W GPR file,required
+rv32i_alu,rtl/execute/rv32i_alu.sv,combinational,Integer ALU and shifts,required
+rv32i_branch_compare,rtl/execute/rv32i_branch_compare.sv,combinational,Signed/unsigned branch conditions,required
+rv32i_target_gen,rtl/execute/rv32i_target_gen.sv,combinational,Branch/JAL/JALR targets,required
+rv32i_lsu,rtl/memory/rv32i_lsu.sv,stateful integration,"Alignment, memory authorization and result handling",required
+rv32i_store_align,rtl/memory/rv32i_store_align.sv,combinational,"Store lanes, wstrb and shifted data",required
+rv32i_load_align,rtl/memory/rv32i_load_align.sv,combinational,Load byte selection and extension,required
+rv32i_dmem_controller,rtl/memory/rv32i_dmem_controller.sv,stateful,Single outstanding request/response tracker,required
+rv32i_if_id_reg,rtl/pipeline/rv32i_if_id_reg.sv,stateful,IF to ID valid/payload register,required
+rv32i_id_ex_reg,rtl/pipeline/rv32i_id_ex_reg.sv,stateful,ID to EX valid/payload register,required
+rv32i_ex_mem_reg,rtl/pipeline/rv32i_ex_mem_reg.sv,stateful,EX to MEM valid/payload register,required
+rv32i_mem_wb_reg,rtl/pipeline/rv32i_mem_wb_reg.sv,stateful,MEM to WB valid/payload register,required
+rv32i_hazard_unit,rtl/control/rv32i_hazard_unit.sv,combinational,RAW/load-use/serialization hazard decisions,required
+rv32i_forward_unit,rtl/control/rv32i_forward_unit.sv,combinational,EX/store/WB forwarding selects,required
+rv32i_redirect_arbiter,rtl/control/rv32i_redirect_arbiter.sv,combinational,Age/priority-based redirect selection,required
+rv32i_pipeline_ctrl,rtl/control/rv32i_pipeline_ctrl.sv,combinational/stateful,"Ready, hold, bubble and kill control",required
+rv32i_csr_file,rtl/trap/rv32i_csr_file.sv,stateful,Machine CSR and counters,required
+rv32i_interrupt_ctrl,rtl/trap/rv32i_interrupt_ctrl.sv,combinational,Interrupt eligibility and priority,required
+rv32i_trap_ctrl,rtl/trap/rv32i_trap_ctrl.sv,stateful integration,Trap entry/MRET state and redirects,required
+rv32i_writeback,rtl/commit/rv32i_writeback.sv,combinational,Final GPR result selection,required
+rv32i_commit_unit,rtl/commit/rv32i_commit_unit.sv,stateful integration,"Architectural completion, minstret and BPU training",required
+rv32i_rvfi_adapter,rtl/commit/rv32i_rvfi_adapter.sv,stateful/combinational,NRET=1 RVFI-style trace,required
+rv32i_pkg,rtl/pkg/rv32i_pkg.sv,package,"Enums, structs, constants and helper functions",required
+rv32i_soc,rtl/soc/rv32i_soc.sv,integration,Core plus memory/address decode wrapper,later integration

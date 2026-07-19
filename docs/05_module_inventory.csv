@@ -1,0 +1,31 @@
+repository,module,file,role,reuse_decision,status_or_note
+repo1,datapath,rtl/datpath.v,single-cycle CPU datapath,reference_only,Useful architectural reference
+repo1,alu,rtl/alu.v,integer ALU,reference_only,Semantics useful but not primary implementation
+repo1,control_unit,rtl/control_unit.v,single-cycle decoder,reference_only,SYSTEM is treated as NOP
+repo1,imm_gen,rtl/immediate_gen.v,immediate generator,reference_only,Useful cross-check
+repo1,register_file,rtl/register_file.v,register file,reference_only,Simple baseline
+repo1,instruction_memory,rtl/instruction_memory.v,behavioral IMEM,reference_only,Simulation model only
+repo1,data_memory,rtl/data_memory.v,behavioral DMEM/aligner,reuse_concept,Useful byte/halfword semantics
+repo1,program_counter,rtl/program_counter.v,PC register,reference_only,Simple baseline
+repo1,top_system,rtl/soc.v,SoC top,do_not_reuse,Mixes CPU/I2C/memory and duplicate implementations
+repo1,risc_top,rtl/soc.v,monolithic CPU top,do_not_reuse,Conflicts with modular RTL organization
+repo1,i2c_wrapper,rtl/soc.v,I2C subsystem,optional_reference,Peripheral not part of CPU core
+repo1,address_decoder,rtl/soc.v,address decode,optional_reference,May inform later SoC wrapper
+repo2,Top_module_pipeline_RISC_V_32I,src/Top_module_pipeline_RISC_V_32I.v,5-stage top,refactor,Primary architecture baseline but ports/memory/control must change
+repo2,Program_Counter,src/Program_Counter.v,PC register,reuse_after_review,Add reset policy and fetch backpressure
+repo2,IF_ID,src/IF_ID.v,pipeline register,rewrite,Add valid/prediction metadata/kill
+repo2,ID_EX,src/ID_EX.v,pipeline register,rewrite,Add valid/trap/prediction metadata
+repo2,EX_MEM,src/EX_MEM.v,pipeline register,rewrite,Add valid/exception/transaction metadata
+repo2,MEM_WB,src/MEM_WB.v,pipeline register,rewrite,Add valid/retirement metadata
+repo2,control_unit,src/control_unit.v,instruction decoder,refactor,37 instructions decoded; legality/traps missing
+repo2,imm_extend,src/imm_extend.v,immediate generator,reuse_after_tests,Core formulas are suitable
+repo2,Register_File,src/Register_File.v,register file,refactor,Avoid resetting every storage bit; preserve x0 and bypass behavior
+repo2,ALU,src/ALU.v,integer ALU,reuse_after_tests,4-bit encoded control is acceptable
+repo2,Forwarding_Unit,src/Forwarding_Unit.v,EX forwarding,reuse_after_review,Needs awareness of valid/load availability and store data paths
+repo2,Hazard_Unit,src/Hazard_Unit.v,load-use/control hazard,refactor,Needs centralized stall/kill/backpressure control
+repo2,Branch_Prediction_Unit,src/Branch_Prediction_Unit.v,BPU integration,rewrite,Misprediction method is incorrect
+repo2,PHT,src/PHT.v,gshare-like predictor table,rewrite,Update must use prediction-time history/index
+repo2,BTB,src/BTB.v,branch target buffer,rewrite,Add prediction metadata and precise update policy
+repo2,instruction_memory,src/instruction_memory.v,behavioral IMEM,simulation_only,Move outside CPU core
+repo2,data_memory,src/data_memory.v,behavioral DMEM/LSU behavior,split,Separate LSU alignment from memory storage
+repo2,Top_Single_Cycle,src/Top_Single_Cycle.v,single-cycle top,reference_only,Useful comparison model only

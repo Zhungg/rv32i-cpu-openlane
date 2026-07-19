@@ -1,0 +1,69 @@
+`timescale 1ns/1ps
+// SPDX-License-Identifier: Apache-2.0
+//
+// File: rtl/pipeline/rv32i_ex_mem.sv
+//
+// EX/MEM pipeline register.
+//
+// Protocol:
+// - valid_i && ready_o transfers input payload into this stage.
+// - valid_o && ready_i transfers the current payload downstream.
+// - When downstream is not ready, valid and payload are held.
+// - flush_i and kill_i invalidate the current stage entry.
+// - Only the valid bit is reset; the payload is intentionally not reset.
+//
+// Priority:
+//     asynchronous reset
+//     > flush/kill
+//     > valid-ready transfer
+//     > hold
+
+import rv32i_types_pkg::*;
+
+module rv32i_ex_mem (
+    input  logic                              clk_i,
+    input  logic                              rst_ni,
+
+    input  logic                              flush_i,
+    input  logic                              kill_i,
+
+    input  logic                              valid_i,
+    output logic                              ready_o,
+    input  rv32i_types_pkg::ex_mem_payload_t    payload_i,
+
+    output logic                              valid_o,
+    input  logic                              ready_i,
+    output rv32i_types_pkg::ex_mem_payload_t    payload_o
+);
+
+
+    logic              valid_q;
+    ex_mem_payload_t     payload_q;
+
+    // The stage can accept a new payload when it is empty, or when its
+    // current payload will be consumed by the downstream stage.
+    always_comb begin
+        ready_o = !valid_q || ready_i;
+    end
+
+    assign valid_o   = valid_q;
+    assign payload_o = payload_q;
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+            valid_q <= 1'b0;
+        end
+        else if (flush_i || kill_i) begin
+            valid_q <= 1'b0;
+        end
+        else if (ready_o) begin
+            valid_q <= valid_i;
+
+            // Avoid unnecessary payload toggling when inserting a bubble.
+            if (valid_i) begin
+                payload_q <= payload_i;
+            end
+        end
+    end
+
+endmodule

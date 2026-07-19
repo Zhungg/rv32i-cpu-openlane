@@ -1,0 +1,37 @@
+flowchart LR
+    IMEM[(Instruction Memory)]
+    DMEM[(Data Memory / MMIO)]
+
+    subgraph CORE[rv32i_core]
+      subgraph FE[Frontend]
+        PC[PC + Fetch Controller]
+        BPU[BPU\nBTB + PHT + GHR + RAS]
+        FB[Fetch Buffer]
+      end
+
+      IFID[IF/ID]
+      DEC[Decoder + ImmGen + Regfile]
+      IDEX[ID/EX]
+      EX[ALU + Branch Compare + Target]
+      EXMEM[EX/MEM]
+      LSU[LSU + D-memory Controller]
+      MEMWB[MEM/WB]
+      COMMIT[Commit + WB + RVFI]
+      CSR[CSR + Trap + Interrupt]
+      CTRL[Hazard + Forward + Redirect Controller]
+
+      PC --> BPU --> PC
+      PC --> IMEM
+      IMEM --> FB --> IFID --> DEC --> IDEX --> EX --> EXMEM --> LSU --> MEMWB --> COMMIT
+      LSU <--> DMEM
+      CSR <--> COMMIT
+      CTRL -. stall/flush/kill .-> IFID
+      CTRL -. stall/flush/kill .-> IDEX
+      CTRL -. stall/flush/kill .-> EXMEM
+      CTRL -. redirect .-> PC
+      COMMIT -. trap/MRET/FENCE.I .-> CTRL
+      EX -. mispredict .-> CTRL
+      COMMIT -. GPR WB .-> DEC
+      EXMEM -. forwarding .-> EX
+      MEMWB -. forwarding .-> EX
+    end

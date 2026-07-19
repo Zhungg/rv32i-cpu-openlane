@@ -1,0 +1,43 @@
+category,instruction,current_repo2_decode,target_status,notes
+U,LUI,yes,required,Current ALU path present
+U,AUIPC,yes,required,Current PC plus immediate path present
+Jump,JAL,yes,required,Link and redirect present
+Jump,JALR,yes,required,Must validate funct3 and alignment behavior
+Branch,BEQ,yes,required,Present
+Branch,BNE,yes,required,Present
+Branch,BLT,yes,required,Present
+Branch,BGE,yes,required,Present
+Branch,BLTU,yes,required,Present
+Branch,BGEU,yes,required,Present
+Load,LB,yes,required,Present
+Load,LH,yes,required,Present
+Load,LW,yes,required,Present
+Load,LBU,yes,required,Present
+Load,LHU,yes,required,Present
+Store,SB,yes,required,Present
+Store,SH,yes,required,Present
+Store,SW,yes,required,Present
+Immediate,ADDI,yes,required,Present
+Immediate,SLTI,yes,required,Present
+Immediate,SLTIU,yes,required,Present
+Immediate,XORI,yes,required,Present
+Immediate,ORI,yes,required,Present
+Immediate,ANDI,yes,required,Present
+Immediate,SLLI,yes,required,Must validate upper immediate bits
+Immediate,SRLI,yes,required,Must validate upper immediate bits
+Immediate,SRAI,yes,required,Must validate upper immediate bits
+Register,ADD,yes,required,Present
+Register,SUB,yes,required,Present
+Register,SLL,yes,required,Present
+Register,SLT,yes,required,Present
+Register,SLTU,yes,required,Present
+Register,XOR,yes,required,Present
+Register,SRL,yes,required,Present
+Register,SRA,yes,required,Present
+Register,OR,yes,required,Present
+Register,AND,yes,required,Present
+Memory ordering,FENCE,no,required,Add drain/wait semantics appropriate to memory interface
+System,ECALL,no,required,Generate environment-call trap
+System,EBREAK,no,required,Generate breakpoint trap
+Extension,Zicsr CSR ops,no,project target,CSRRW/CSRRS/CSRRC and immediate forms
+Privileged,MRET,no,project target,Machine-mode trap return

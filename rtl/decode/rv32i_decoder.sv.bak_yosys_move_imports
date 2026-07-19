@@ -1,0 +1,293 @@
+`timescale 1ns/1ps
+// SPDX-License-Identifier: Apache-2.0
+//
+// Main RV32I instruction decoder.
+
+import rv32i_pkg::*;
+import rv32i_types_pkg::*;
+import rv32i_encoding_pkg::*;
+import rv32i_csr_pkg::*;
+
+module rv32i_decoder (
+    input  insn_t         instruction_i,
+
+    output decoder_ctrl_t control_o,
+    output reg_idx_t      rs1_index_o,
+    output reg_idx_t      rs2_index_o,
+    output reg_idx_t      rd_index_o,
+    output logic [11:0]   csr_address_o
+);
+
+
+
+    import rv32i_encoding_pkg::*;
+    import rv32i_types_pkg::*;
+
+    opcode_t opcode;
+    logic [2:0] funct3;
+    logic [6:0] funct7;
+
+    alu_op_e decoded_alu_op;
+    logic    unused_alu_illegal;
+    logic    illegal_encoding;
+
+    assign opcode        = instruction_i[6:0];
+    assign rd_index_o    = instruction_i[11:7];
+    assign funct3        = instruction_i[14:12];
+    assign rs1_index_o   = instruction_i[19:15];
+    assign rs2_index_o   = instruction_i[24:20];
+    assign funct7        = instruction_i[31:25];
+    assign csr_address_o = instruction_i[31:20];
+
+    rv32i_alu_decoder u_alu_decoder (
+        .opcode_i  (opcode),
+        .funct3_i  (funct3),
+        .funct7_i  (funct7),
+        .alu_op_o  (decoded_alu_op),
+        .illegal_o (unused_alu_illegal)
+    );
+
+    rv32i_illegal_detect u_illegal_detect (
+        .instruction_i (instruction_i),
+        .illegal_o     (illegal_encoding)
+    );
+
+    always_comb begin
+        control_o = '0;
+
+        case (opcode)
+            OPCODE_LUI: begin
+                control_o.gpr_write_enable = 1'b1;
+                control_o.imm_sel          = IMM_U;
+                control_o.operand_b_sel    = OP_B_IMM;
+                control_o.wb_sel           = WB_IMMEDIATE;
+            end
+
+            OPCODE_AUIPC: begin
+                control_o.gpr_write_enable = 1'b1;
+                control_o.alu_op           = ALU_ADD;
+                control_o.imm_sel          = IMM_U;
+                control_o.operand_a_sel    = OP_A_PC;
+                control_o.operand_b_sel    = OP_B_IMM;
+                control_o.wb_sel           = WB_ALU;
+            end
+
+            OPCODE_JAL: begin
+                control_o.gpr_write_enable = 1'b1;
+                control_o.imm_sel          = IMM_J;
+                control_o.branch_op        = BR_JAL;
+                control_o.wb_sel           = WB_PC_PLUS_4;
+            end
+
+            OPCODE_JALR: begin
+                control_o.use_rs1          = 1'b1;
+                control_o.gpr_write_enable = 1'b1;
+                control_o.imm_sel          = IMM_I;
+                control_o.branch_op        = BR_JALR;
+                control_o.wb_sel           = WB_PC_PLUS_4;
+            end
+
+            OPCODE_BRANCH: begin
+                control_o.use_rs1 = 1'b1;
+                control_o.use_rs2 = 1'b1;
+                control_o.imm_sel = IMM_B;
+
+                case (funct3)
+                    FUNCT3_BEQ:  control_o.branch_op = BR_EQ;
+                    FUNCT3_BNE:  control_o.branch_op = BR_NE;
+                    FUNCT3_BLT:  control_o.branch_op = BR_LT;
+                    FUNCT3_BGE:  control_o.branch_op = BR_GE;
+                    FUNCT3_BLTU: control_o.branch_op = BR_LTU;
+                    FUNCT3_BGEU: control_o.branch_op = BR_GEU;
+                    default:     control_o.branch_op = BR_NONE;
+                endcase
+            end
+
+            OPCODE_LOAD: begin
+                control_o.use_rs1          = 1'b1;
+                control_o.gpr_write_enable = 1'b1;
+                control_o.alu_op           = ALU_ADD;
+                control_o.imm_sel          = IMM_I;
+                control_o.operand_a_sel    = OP_A_RS1;
+                control_o.operand_b_sel    = OP_B_IMM;
+                control_o.wb_sel           = WB_MEMORY;
+                control_o.memory_valid     = 1'b1;
+                control_o.memory_write     = 1'b0;
+
+                case (funct3)
+                    FUNCT3_LB: begin
+                        control_o.memory_size     = MEM_SIZE_BYTE;
+                        control_o.memory_unsigned = 1'b0;
+                    end
+
+                    FUNCT3_LH: begin
+                        control_o.memory_size     = MEM_SIZE_HALF;
+                        control_o.memory_unsigned = 1'b0;
+                    end
+
+                    FUNCT3_LW: begin
+                        control_o.memory_size     = MEM_SIZE_WORD;
+                        control_o.memory_unsigned = 1'b0;
+                    end
+
+                    FUNCT3_LBU: begin
+                        control_o.memory_size     = MEM_SIZE_BYTE;
+                        control_o.memory_unsigned = 1'b1;
+                    end
+
+                    FUNCT3_LHU: begin
+                        control_o.memory_size     = MEM_SIZE_HALF;
+                        control_o.memory_unsigned = 1'b1;
+                    end
+
+                    default: begin
+                        control_o.memory_size     = MEM_SIZE_BYTE;
+                        control_o.memory_unsigned = 1'b0;
+                    end
+                endcase
+            end
+
+            OPCODE_STORE: begin
+                control_o.use_rs1       = 1'b1;
+                control_o.use_rs2       = 1'b1;
+                control_o.alu_op        = ALU_ADD;
+                control_o.imm_sel       = IMM_S;
+                control_o.operand_a_sel = OP_A_RS1;
+                control_o.operand_b_sel = OP_B_IMM;
+                control_o.memory_valid  = 1'b1;
+                control_o.memory_write  = 1'b1;
+
+                case (funct3)
+                    FUNCT3_SB: control_o.memory_size = MEM_SIZE_BYTE;
+                    FUNCT3_SH: control_o.memory_size = MEM_SIZE_HALF;
+                    FUNCT3_SW: control_o.memory_size = MEM_SIZE_WORD;
+                    default:   control_o.memory_size = MEM_SIZE_BYTE;
+                endcase
+            end
+
+            OPCODE_OP_IMM: begin
+                control_o.use_rs1          = 1'b1;
+                control_o.gpr_write_enable = 1'b1;
+                control_o.alu_op           = decoded_alu_op;
+                control_o.imm_sel          = IMM_I;
+                control_o.operand_a_sel    = OP_A_RS1;
+                control_o.operand_b_sel    = OP_B_IMM;
+                control_o.wb_sel           = WB_ALU;
+            end
+
+            OPCODE_OP: begin
+                control_o.use_rs1          = 1'b1;
+                control_o.use_rs2          = 1'b1;
+                control_o.gpr_write_enable = 1'b1;
+                control_o.alu_op           = decoded_alu_op;
+                control_o.operand_a_sel    = OP_A_RS1;
+                control_o.operand_b_sel    = OP_B_RS2;
+                control_o.wb_sel           = WB_ALU;
+            end
+
+            OPCODE_MISC_MEM: begin
+                control_o.serializing = 1'b1;
+
+                case (funct3)
+                    FUNCT3_FENCE:
+                        control_o.system_op = SYS_FENCE;
+
+                    FUNCT3_FENCE_I:
+                        control_o.system_op = SYS_FENCE_I;
+
+                    default:
+                        control_o.system_op = SYS_NONE;
+                endcase
+            end
+
+            OPCODE_SYSTEM: begin
+                control_o.serializing = 1'b1;
+
+                case (funct3)
+                    FUNCT3_PRIV: begin
+                        case (instruction_i[31:20])
+                            SYSTEM_ECALL:
+                                control_o.system_op = SYS_ECALL;
+
+                            SYSTEM_EBREAK:
+                                control_o.system_op = SYS_EBREAK;
+
+                            SYSTEM_MRET:
+                                control_o.system_op = SYS_MRET;
+
+                            SYSTEM_WFI:
+                                control_o.system_op = SYS_WFI;
+
+                            default:
+                                control_o.system_op = SYS_NONE;
+                        endcase
+                    end
+
+                    FUNCT3_CSRRW,
+                    FUNCT3_CSRRS,
+                    FUNCT3_CSRRC,
+                    FUNCT3_CSRRWI,
+                    FUNCT3_CSRRSI,
+                    FUNCT3_CSRRCI: begin
+                        control_o.csr_valid        = 1'b1;
+                        control_o.gpr_write_enable = 1'b1;
+                        control_o.wb_sel           = WB_CSR;
+
+                        case (funct3)
+                            FUNCT3_CSRRW: begin
+                                control_o.use_rs1 = 1'b1;
+                                control_o.csr_op   = CSR_OP_WRITE;
+                            end
+
+                            FUNCT3_CSRRS: begin
+                                control_o.use_rs1 = 1'b1;
+                                control_o.csr_op   = CSR_OP_SET;
+                            end
+
+                            FUNCT3_CSRRC: begin
+                                control_o.use_rs1 = 1'b1;
+                                control_o.csr_op   = CSR_OP_CLEAR;
+                            end
+
+                            FUNCT3_CSRRWI: begin
+                                control_o.csr_use_immediate = 1'b1;
+                                control_o.imm_sel           = IMM_Z;
+                                control_o.csr_op            = CSR_OP_WRITE;
+                            end
+
+                            FUNCT3_CSRRSI: begin
+                                control_o.csr_use_immediate = 1'b1;
+                                control_o.imm_sel           = IMM_Z;
+                                control_o.csr_op            = CSR_OP_SET;
+                            end
+
+                            FUNCT3_CSRRCI: begin
+                                control_o.csr_use_immediate = 1'b1;
+                                control_o.imm_sel           = IMM_Z;
+                                control_o.csr_op            = CSR_OP_CLEAR;
+                            end
+
+                            default:
+                                control_o.csr_op = CSR_OP_NONE;
+                        endcase
+                    end
+
+                    default: begin
+                        control_o.system_op = SYS_NONE;
+                    end
+                endcase
+            end
+
+            default: begin
+                control_o = '0;
+            end
+        endcase
+
+        // Illegal instructions must have no architectural side effects.
+        if (illegal_encoding) begin
+            control_o         = '0;
+            control_o.illegal = 1'b1;
+        end
+    end
+
+endmodule

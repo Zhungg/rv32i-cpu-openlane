@@ -1,0 +1,117 @@
+`timescale 1ns/1ps
+// SPDX-License-Identifier: Apache-2.0
+//
+// File: rtl/pkg/rv32i_csr_pkg.sv
+//
+// Machine-mode CSR addresses, bit positions and trap cause codes.
+
+package rv32i_csr_pkg;
+
+    import rv32i_pkg::*;
+
+    typedef logic [11:0] csr_addr_t;
+    typedef logic [4:0]  trap_cause_code_t;
+
+    // ---------------------------------------------------------------------
+    // Machine information CSRs
+    // ---------------------------------------------------------------------
+
+    localparam csr_addr_t CSR_MVENDORID = 12'hF11;
+    localparam csr_addr_t CSR_MARCHID   = 12'hF12;
+    localparam csr_addr_t CSR_MIMPID    = 12'hF13;
+    localparam csr_addr_t CSR_MHARTID   = 12'hF14;
+
+    // ---------------------------------------------------------------------
+    // Machine trap setup CSRs
+    // ---------------------------------------------------------------------
+
+    localparam csr_addr_t CSR_MSTATUS    = 12'h300;
+    localparam csr_addr_t CSR_MISA       = 12'h301;
+    localparam csr_addr_t CSR_MIE        = 12'h304;
+    localparam csr_addr_t CSR_MTVEC      = 12'h305;
+    localparam csr_addr_t CSR_MCOUNTEREN = 12'h306;
+
+    // ---------------------------------------------------------------------
+    // Machine trap handling CSRs
+    // ---------------------------------------------------------------------
+
+    localparam csr_addr_t CSR_MSCRATCH = 12'h340;
+    localparam csr_addr_t CSR_MEPC     = 12'h341;
+    localparam csr_addr_t CSR_MCAUSE   = 12'h342;
+    localparam csr_addr_t CSR_MTVAL    = 12'h343;
+    localparam csr_addr_t CSR_MIP      = 12'h344;
+
+    // ---------------------------------------------------------------------
+    // Machine counters
+    // ---------------------------------------------------------------------
+
+    localparam csr_addr_t CSR_MCYCLE    = 12'hB00;
+    localparam csr_addr_t CSR_MINSTRET  = 12'hB02;
+    localparam csr_addr_t CSR_MCYCLEH   = 12'hB80;
+    localparam csr_addr_t CSR_MINSTRETH = 12'hB82;
+
+    // Unprivileged counter aliases.
+    localparam csr_addr_t CSR_CYCLE    = 12'hC00;
+    localparam csr_addr_t CSR_TIME     = 12'hC01;
+    localparam csr_addr_t CSR_INSTRET  = 12'hC02;
+    localparam csr_addr_t CSR_CYCLEH   = 12'hC80;
+    localparam csr_addr_t CSR_TIMEH    = 12'hC81;
+    localparam csr_addr_t CSR_INSTRETH = 12'hC82;
+
+    // ---------------------------------------------------------------------
+    // mstatus fields
+    // ---------------------------------------------------------------------
+
+    localparam int unsigned MSTATUS_MIE_BIT  = 3;
+    localparam int unsigned MSTATUS_MPIE_BIT = 7;
+    localparam int unsigned MSTATUS_MPP_LSB  = 11;
+    localparam int unsigned MSTATUS_MPP_MSB  = 12;
+
+    localparam logic [1:0] PRIVILEGE_MODE_U = 2'b00;
+    localparam logic [1:0] PRIVILEGE_MODE_M = 2'b11;
+
+    // ---------------------------------------------------------------------
+    // mie/mip fields
+    // ---------------------------------------------------------------------
+
+    localparam int unsigned IRQ_MSIP_BIT = 3;
+    localparam int unsigned IRQ_MTIP_BIT = 7;
+    localparam int unsigned IRQ_MEIP_BIT = 11;
+
+    // ---------------------------------------------------------------------
+    // Synchronous exception cause codes
+    // ---------------------------------------------------------------------
+
+    localparam trap_cause_code_t EXC_INSN_ADDR_MISALIGNED  = 5'd0;
+    localparam trap_cause_code_t EXC_INSN_ACCESS_FAULT     = 5'd1;
+    localparam trap_cause_code_t EXC_ILLEGAL_INSTRUCTION   = 5'd2;
+    localparam trap_cause_code_t EXC_BREAKPOINT            = 5'd3;
+    localparam trap_cause_code_t EXC_LOAD_ADDR_MISALIGNED  = 5'd4;
+    localparam trap_cause_code_t EXC_LOAD_ACCESS_FAULT     = 5'd5;
+    localparam trap_cause_code_t EXC_STORE_ADDR_MISALIGNED = 5'd6;
+    localparam trap_cause_code_t EXC_STORE_ACCESS_FAULT    = 5'd7;
+    localparam trap_cause_code_t EXC_ECALL_FROM_U          = 5'd8;
+    localparam trap_cause_code_t EXC_ECALL_FROM_M          = 5'd11;
+
+    // ---------------------------------------------------------------------
+    // Interrupt cause codes
+    // ---------------------------------------------------------------------
+
+    localparam trap_cause_code_t IRQ_MACHINE_SOFTWARE = 5'd3;
+    localparam trap_cause_code_t IRQ_MACHINE_TIMER    = 5'd7;
+    localparam trap_cause_code_t IRQ_MACHINE_EXTERNAL = 5'd11;
+
+    function automatic xlen_t make_mcause(
+        input logic             is_interrupt,
+        input trap_cause_code_t cause_code
+    );
+        xlen_t result;
+
+        result              = '0;
+        result[XLEN-1]      = is_interrupt;
+        result[4:0]         = cause_code;
+
+        return result;
+    endfunction
+
+endpackage

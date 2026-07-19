@@ -1,0 +1,52 @@
+`timescale 1ns/1ps
+// SPDX-License-Identifier: Apache-2.0
+//
+// File: rtl/pkg/rv32i_pkg.sv
+//
+// Common architectural constants and base data types.
+
+package rv32i_pkg;
+
+    parameter int unsigned XLEN       = 32;
+    parameter int unsigned INSN_WIDTH = 32;
+    parameter int unsigned REG_COUNT  = 32;
+    parameter int unsigned REG_ADDR_W = $clog2(REG_COUNT);
+
+    typedef logic [XLEN-1:0]       xlen_t;
+    typedef logic [XLEN-1:0]       addr_t;
+    typedef logic [INSN_WIDTH-1:0] insn_t;
+    typedef logic [REG_ADDR_W-1:0] reg_idx_t;
+
+    localparam addr_t DEFAULT_RESET_VECTOR = 32'h0000_0000;
+    localparam insn_t RV32I_NOP            = 32'h0000_0013;
+
+    localparam reg_idx_t REG_X0 = 5'd0;
+    localparam reg_idx_t REG_RA = 5'd1;
+    localparam reg_idx_t REG_SP = 5'd2;
+    localparam reg_idx_t REG_T0 = 5'd5;
+
+    function automatic logic is_x0(input reg_idx_t index);
+        begin
+            is_x0 = (index == REG_X0);
+        end
+    endfunction
+
+    function automatic logic is_instruction_aligned(input addr_t address);
+        begin
+            is_instruction_aligned = (address[1:0] == 2'b00);
+        end
+    endfunction
+
+    function automatic logic is_halfword_aligned(input addr_t address);
+        begin
+            is_halfword_aligned = (address[0] == 1'b0);
+        end
+    endfunction
+
+    function automatic logic is_word_aligned(input addr_t address);
+        begin
+            is_word_aligned = (address[1:0] == 2'b00);
+        end
+    endfunction
+
+endpackage
