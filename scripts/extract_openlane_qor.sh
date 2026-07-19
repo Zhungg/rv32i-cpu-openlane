@@ -7,11 +7,6 @@ cd "$PROJECT_ROOT"
 DESIGN_NAME="rv32i_core"
 RUN_ROOT="openlane/${DESIGN_NAME}/runs"
 
-if [[ ! -d "$RUN_ROOT" ]]; then
-    echo "ERROR: Missing run root: $RUN_ROOT"
-    exit 1
-fi
-
 RUN_DIR="${1:-$(ls -dt ${RUN_ROOT}/RUN_* | head -1)}"
 
 if [[ ! -d "$RUN_DIR" ]]; then
@@ -20,12 +15,10 @@ if [[ ! -d "$RUN_DIR" ]]; then
 fi
 
 OUT_DIR="reports/step8"
-OUT_MD="${OUT_DIR}/step8e_openlane_qor_summary.md"
 OUT_TXT="${OUT_DIR}/step8e_openlane_qor_metrics.txt"
+OUT_MD="${OUT_DIR}/step8e_openlane_qor_summary.md"
 
 mkdir -p "$OUT_DIR"
-
-echo "Using RUN_DIR: $RUN_DIR"
 
 python3 - "$RUN_DIR" "$OUT_TXT" <<'PY'
 import json
@@ -36,49 +29,96 @@ from pathlib import Path
 run_dir = Path(sys.argv[1])
 out_txt = Path(sys.argv[2])
 
-state_files = list(run_dir.rglob("state_out.json"))
+json_files = []
+json_files += list(run_dir.rglob("state_out.json"))
+json_files += list(run_dir.rglob("metrics.json"))
+json_files += list(run_dir.rglob("*.metrics.json"))
 
-if not state_files:
-    raise SystemExit(f"No state_out.json found in {run_dir}")
+def step_num(path: Path):
+    m = re.match(r"(\d+)-", path.parent.name)
+    return int(m.group(1)) if m else -1
 
-def step_key(path: Path):
-    # Example: 67-checker-lvs/state_out.json
-    parent = path.parent.name
-    m = re.match(r"(\d+)-", parent)
-    if m:
-        return int(m.group(1))
-    return -1
+json_files = sorted(set(json_files), key=lambda p: (step_num(p), str(p)))
 
-# Prefer the latest step state_out.
-state_files = sorted(state_files, key=step_key)
-latest = state_files[-1]
+all_metrics = {}
+sources = {}
 
-data = json.loads(latest.read_text())
+def flatten(obj, prefix=""):
+    flat = {}
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            key = f"{prefix}.{k}" if prefix else str(k)
+            if isinstance(v, dict):
+                flat.update(flatten(v, key))
+            else:
+                flat[key] = v
+    return flat
 
-keys = [
-    # Flow status
+for jf in json_files:
+    try:
+        data = json.loads(jf.read_text())
+    except Exception:
+        continue
+
+    candidates = []
+
+    if isinstance(data, dict):
+        candidates.append(data)
+        if isinstance(data.get("metrics"), dict):
+            candidates.append(data["metrics"])
+
+    for cand in candidates:
+        flat = flatten(cand)
+
+        for k, v in flat.items():
+            lk = k.lower()
+
+            # Keep likely QoR/status metrics.
+            wanted = any(token in lk for token in [
+                "flow",
+                "error",
+                "warning",
+                "latch",
+                "instance",
+                "cell",
+                "area",
+                "util",
+                "wns",
+                "tns",
+                "slack",
+                "violation",
+                "drc",
+                "lvs",
+                "antenna",
+                "slew",
+                "fanout",
+                "cap",
+                "power",
+                "wire",
+                "route",
+                "die",
+                "core"
+            ])
+
+            if wanted:
+                all_metrics[k] = v
+                sources[k] = str(jf)
+
+preferred_keys = [
     "flow_errors_count",
+    "design_lint_error_count",
     "design__lint_error__count",
+    "design_lint_warning_count",
     "design__lint_warning__count",
     "design__inferred_latch__count",
     "synthesis_check_error_count",
 
-    # Generic design
     "design__instance__count",
     "design__instance__area",
     "design__core__area",
     "design__die__area",
     "design__utilization",
 
-    # Timing
-    "design__setup__ws",
-    "design__setup__tns",
-    "design__setup__violation__count",
-    "design__hold__ws",
-    "design__hold__tns",
-    "design__hold__violation__count",
-
-    # Alternative timing key names
     "design_setup_wns",
     "design_setup_tns",
     "design_setup_violation_count",
@@ -86,23 +126,25 @@ keys = [
     "design_hold_tns",
     "design_hold_violation_count",
 
-    # Electrical
+    "design__setup__ws",
+    "design__setup__tns",
+    "design__setup__violation__count",
+    "design__hold__ws",
+    "design__hold__tns",
+    "design__hold__violation__count",
+
     "design_max_slew_violation_count",
     "design_max_fanout_violation_count",
     "design_max_cap_violation_count",
-    "design__max_slew_violation__count",
-    "design__max_fanout_violation__count",
-    "design__max_cap_violation__count",
 
-    # Routing / DRC / LVS / antenna
-    "route__drc_errors",
     "route_drc_errors",
-    "route__antenna_violation__count",
+    "route__drc_errors",
     "route_antenna_violation_count",
-    "design__violations",
-    "design_violations",
+    "route__antenna_violation__count",
 
-    # Power grid
+    "design_violations",
+    "design__violations",
+
     "design_power_grid_violation_count",
     "design_power_grid_violation_count__net:VPWR",
     "design_power_grid_violation_count__net:VGND",
@@ -110,26 +152,23 @@ keys = [
 
 lines = []
 lines.append(f"RUN_DIR: {run_dir}")
-lines.append(f"METRICS_SOURCE: {latest}")
+lines.append(f"JSON_FILES_SCANNED: {len(json_files)}")
 lines.append("")
 
-for k in keys:
-    if k in data:
-        lines.append(f"{k}: {data[k]}")
+lines.append("---- Key metrics ----")
+for k in preferred_keys:
+    if k in all_metrics:
+        lines.append(f"{k}: {all_metrics[k]}")
 
-# Also print all likely QoR keys if exact names differ.
 lines.append("")
-lines.append("---- Additional matched metrics ----")
-patterns = [
-    "wns", "tns", "violation", "drc", "antenna", "area",
-    "util", "instance", "cell", "power", "slew", "fanout", "cap"
-]
+lines.append("---- All matched metrics ----")
+for k in sorted(all_metrics):
+    lines.append(f"{k}: {all_metrics[k]}")
 
-for k in sorted(data.keys()):
-    lk = k.lower()
-    if any(p in lk for p in patterns):
-        if k not in keys:
-            lines.append(f"{k}: {data[k]}")
+lines.append("")
+lines.append("---- Metric sources ----")
+for k in sorted(sources):
+    lines.append(f"{k}: {sources[k]}")
 
 out_txt.write_text("\n".join(lines) + "\n")
 print("\n".join(lines))
@@ -141,12 +180,10 @@ cat > "$OUT_MD" <<EOF2
 ## Run
 
 \`\`\`text
-$(basename "$RUN_DIR")
+$RUN_DIR
 \`\`\`
 
-## Metrics
-
-Raw extracted metrics:
+## Extracted Metrics
 
 \`\`\`text
 $(cat "$OUT_TXT")
@@ -160,18 +197,9 @@ $(find "$RUN_DIR/final" -maxdepth 3 -type f 2>/dev/null | sort || true)
 
 ## Notes
 
-This is the first OpenLane smoke-run QoR extraction for the RV32I core.
+This is the first OpenLane QoR baseline for the RV32I core.
 
-The current goal is not final signoff closure yet. The goal is to establish a baseline for:
-
-- area
-- utilization
-- timing
-- routing DRC
-- antenna
-- power grid
-- final generated artifacts
-
+The goal of this step is to record baseline metrics after the first OpenLane smoke run, not to close final timing or electrical QoR yet.
 EOF2
 
 echo
