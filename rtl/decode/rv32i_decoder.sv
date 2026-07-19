@@ -4,9 +4,9 @@
 // Main RV32I instruction decoder.
 
 import rv32i_pkg::*;
+import rv32i_types_pkg::*;
 import rv32i_encoding_pkg::*;
 import rv32i_csr_pkg::*;
-import rv32i_types_pkg::*;
 
 module rv32i_decoder (
     input  insn_t         instruction_i,
@@ -20,6 +20,8 @@ module rv32i_decoder (
 
 
 
+    import rv32i_encoding_pkg::*;
+    import rv32i_types_pkg::*;
 
     opcode_t opcode;
     logic [2:0] funct3;

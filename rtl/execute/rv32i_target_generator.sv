@@ -11,9 +11,6 @@
 //
 // For IALIGN=32, the resulting target must be four-byte aligned.
 
-import rv32i_pkg::*;
-import rv32i_types_pkg::*;
-
 module rv32i_target_generator (
     input  rv32i_pkg::addr_t             pc_i,
     input  rv32i_pkg::xlen_t             rs1_value_i,
@@ -24,6 +21,8 @@ module rv32i_target_generator (
     output logic                         target_misaligned_o
 );
 
+    import rv32i_pkg::*;
+    import rv32i_types_pkg::*;
 
     addr_t jalr_raw_target;
 

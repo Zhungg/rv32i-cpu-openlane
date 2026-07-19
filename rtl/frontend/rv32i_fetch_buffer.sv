@@ -10,8 +10,6 @@
 // - flush_i invalidates a wrong-path buffered instruction.
 // - Only valid_q is reset; payload_q is intentionally not reset.
 
-import rv32i_types_pkg::*;
-
 module rv32i_fetch_buffer (
     input  logic                              clk_i,
     input  logic                              rst_ni,
@@ -27,6 +25,7 @@ module rv32i_fetch_buffer (
     output rv32i_types_pkg::if_id_payload_t   payload_o
 );
 
+    import rv32i_types_pkg::*;
 
     logic           valid_q;
     if_id_payload_t payload_q;

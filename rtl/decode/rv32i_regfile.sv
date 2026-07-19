@@ -12,8 +12,6 @@
 // There is intentionally no reset port. Architectural software must not
 // assume a reset value for x1 through x31.
 
-import rv32i_pkg::*;
-
 module rv32i_regfile (
     input  logic                      clk_i,
 
@@ -28,6 +26,7 @@ module rv32i_regfile (
     input  rv32i_pkg::xlen_t          write_data_i
 );
 
+    import rv32i_pkg::*;
 
     xlen_t registers_q [REG_COUNT-1:0];
 

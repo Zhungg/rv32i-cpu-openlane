@@ -11,8 +11,6 @@
 // Misaligned accesses are converted into precise traps by the LSU/MEM
 // stage in Step 6C.
 
-import rv32i_types_pkg::*;
-
 module rv32i_misaligned_detect (
     input  rv32i_pkg::addr_t          address_i,
     input  rv32i_types_pkg::mem_size_e size_i,
@@ -20,6 +18,7 @@ module rv32i_misaligned_detect (
     output logic                      misaligned_o
 );
 
+    import rv32i_types_pkg::*;
 
     always @* begin
         misaligned_o = 1'b0;

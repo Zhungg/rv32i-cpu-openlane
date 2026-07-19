@@ -3,9 +3,6 @@
 //
 // ALU-operation decoder for RV32I OP and OP-IMM instructions.
 
-import rv32i_encoding_pkg::*;
-import rv32i_types_pkg::*;
-
 module rv32i_alu_decoder (
     input  rv32i_encoding_pkg::opcode_t opcode_i,
     input  logic [2:0]                  funct3_i,
@@ -15,6 +12,8 @@ module rv32i_alu_decoder (
     output logic                        illegal_o
 );
 
+    import rv32i_encoding_pkg::*;
+    import rv32i_types_pkg::*;
 
     always_comb begin
         alu_op_o  = ALU_ADD;

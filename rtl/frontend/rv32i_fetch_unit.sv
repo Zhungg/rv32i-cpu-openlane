@@ -9,9 +9,6 @@
 // - Update predictor from resolved branch/jump feedback.
 // - Redirect input still has highest priority.
 
-import rv32i_pkg::*;
-import rv32i_types_pkg::*;
-
 module rv32i_fetch_unit #(
     parameter logic [31:0] RESET_VECTOR    = 32'h0000_0000,
     parameter int unsigned BTB_INDEX_WIDTH = 6
@@ -45,6 +42,8 @@ module rv32i_fetch_unit #(
                                            fetch_payload_o
 );
 
+    import rv32i_pkg::*;
+    import rv32i_types_pkg::*;
 
     addr_t              pc_q;
     addr_t              pc_next;

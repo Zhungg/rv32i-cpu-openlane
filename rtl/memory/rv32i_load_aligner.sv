@@ -3,11 +3,7 @@
 //
 // RV32I load-data aligner for a 32-bit little-endian data bus.
 //
-// This
-
-import rv32i_types_pkg::*;
-
-module extracts byte/halfword/word data and performs sign or zero
+// This module extracts byte/halfword/word data and performs sign or zero
 // extension according to the decoded load instruction.
 
 module rv32i_load_aligner (
@@ -19,6 +15,7 @@ module rv32i_load_aligner (
     output rv32i_pkg::xlen_t           load_data_o
 );
 
+    import rv32i_types_pkg::*;
 
     logic [7:0]  selected_byte;
     logic [15:0] selected_halfword;

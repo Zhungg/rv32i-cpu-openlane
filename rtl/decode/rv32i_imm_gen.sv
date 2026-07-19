@@ -11,9 +11,6 @@
 // - J: JAL
 // - Z: CSR immediate
 
-import rv32i_pkg::*;
-import rv32i_types_pkg::*;
-
 module rv32i_imm_gen (
     input  rv32i_pkg::insn_t           instruction_i,
     input  rv32i_types_pkg::imm_sel_e  imm_sel_i,
@@ -21,6 +18,8 @@ module rv32i_imm_gen (
     output rv32i_pkg::xlen_t           immediate_o
 );
 
+    import rv32i_pkg::*;
+    import rv32i_types_pkg::*;
 
     always_comb begin
         immediate_o = '0;

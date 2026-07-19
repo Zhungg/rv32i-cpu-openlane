@@ -18,8 +18,6 @@
 //     > valid-ready transfer
 //     > hold
 
-import rv32i_types_pkg::*;
-
 module rv32i_mem_wb (
     input  logic                              clk_i,
     input  logic                              rst_ni,
@@ -36,6 +34,7 @@ module rv32i_mem_wb (
     output rv32i_types_pkg::mem_wb_payload_t    payload_o
 );
 
+    import rv32i_types_pkg::*;
 
     logic              valid_q;
     mem_wb_payload_t     payload_q;

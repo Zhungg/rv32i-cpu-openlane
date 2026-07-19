@@ -18,8 +18,6 @@
 //     > valid-ready transfer
 //     > hold
 
-import rv32i_types_pkg::*;
-
 module rv32i_if_id (
     input  logic                              clk_i,
     input  logic                              rst_ni,
@@ -36,6 +34,7 @@ module rv32i_if_id (
     output rv32i_types_pkg::if_id_payload_t    payload_o
 );
 
+    import rv32i_types_pkg::*;
 
     logic              valid_q;
     if_id_payload_t     payload_q;

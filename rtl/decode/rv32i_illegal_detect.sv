@@ -3,11 +3,7 @@
 //
 // RV32I instruction-encoding legality checker.
 //
-// This
-
-import rv32i_encoding_pkg::*;
-
-module checks encoding legality only. CSR existence, privilege and
+// This module checks encoding legality only. CSR existence, privilege and
 // read-only access checks are handled by the CSR subsystem at execution.
 
 module rv32i_illegal_detect (
@@ -15,6 +11,7 @@ module rv32i_illegal_detect (
     output logic             illegal_o
 );
 
+    import rv32i_encoding_pkg::*;
 
     opcode_t   opcode;
     logic [2:0] funct3;

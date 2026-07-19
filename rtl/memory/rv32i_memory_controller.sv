@@ -3,11 +3,7 @@
 //
 // One-outstanding data-memory transaction controller.
 //
-// This
-
-import rv32i_types_pkg::*;
-
-module does not perform alignment or exception classification.
+// This module does not perform alignment or exception classification.
 // It only transfers one request to the external D-memory interface and
 // waits for the matching response.
 //
@@ -37,6 +33,7 @@ module rv32i_memory_controller (
     input  rv32i_types_pkg::dmem_response_t   dmem_rsp_i
 );
 
+    import rv32i_types_pkg::*;
 
     typedef enum logic [0:0] {
         STATE_IDLE,

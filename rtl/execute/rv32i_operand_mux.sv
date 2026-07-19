@@ -4,11 +4,7 @@
 // RV32I EX-stage ALU operand selection.
 //
 // Forwarded rs1/rs2 values must be selected before entering this module.
-// This
-
-import rv32i_types_pkg::*;
-
-module only selects architectural operand classes.
+// This module only selects architectural operand classes.
 
 module rv32i_operand_mux (
     input  rv32i_pkg::xlen_t                  rs1_value_i,
@@ -23,6 +19,7 @@ module rv32i_operand_mux (
     output rv32i_pkg::xlen_t                  operand_b_o
 );
 
+    import rv32i_types_pkg::*;
 
     always_comb begin
         operand_a_o = '0;

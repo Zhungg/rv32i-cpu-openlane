@@ -9,9 +9,6 @@
 // - No flag registers are created.
 // - Branch comparison is handled by a dedicated comparator module.
 
-import rv32i_pkg::*;
-import rv32i_types_pkg::*;
-
 module rv32i_alu (
     input  rv32i_pkg::xlen_t          operand_a_i,
     input  rv32i_pkg::xlen_t          operand_b_i,
@@ -20,6 +17,8 @@ module rv32i_alu (
     output rv32i_pkg::xlen_t          result_o
 );
 
+    import rv32i_pkg::*;
+    import rv32i_types_pkg::*;
 
     always_comb begin
         result_o = '0;

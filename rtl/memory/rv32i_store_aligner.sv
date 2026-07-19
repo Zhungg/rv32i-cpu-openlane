@@ -3,11 +3,7 @@
 //
 // RV32I store-data aligner for a 32-bit little-endian data bus.
 //
-// This
-
-import rv32i_types_pkg::*;
-
-module does not check alignment. Misalignment is detected by
+// This module does not check alignment. Misalignment is detected by
 // rv32i_misaligned_detect before the memory request is issued.
 
 module rv32i_store_aligner (
@@ -19,6 +15,7 @@ module rv32i_store_aligner (
     output logic [3:0]                 write_strobe_o
 );
 
+    import rv32i_types_pkg::*;
 
     always @* begin
         aligned_write_data_o = '0;

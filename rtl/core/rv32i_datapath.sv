@@ -20,10 +20,6 @@
 // Unsupported Step-6 instructions are held in IF/ID. They are not allowed
 // to retire with an incorrect result.
 
-import rv32i_pkg::*;
-import rv32i_csr_pkg::*;
-import rv32i_types_pkg::*;
-
 module rv32i_datapath #(
     parameter logic [31:0] RESET_VECTOR = 32'h0000_0000,
     parameter logic [31:0] TRAP_VECTOR  = 32'h0000_0100
@@ -68,6 +64,9 @@ module rv32i_datapath #(
     output rv32i_pkg::addr_t                  debug_redirect_pc_o
 );
 
+    import rv32i_pkg::*;
+    import rv32i_types_pkg::*;
+    import rv32i_csr_pkg::*;
 
     // ==================================================================
     // Frontend → IF/ID

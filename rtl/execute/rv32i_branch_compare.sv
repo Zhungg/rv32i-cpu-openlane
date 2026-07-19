@@ -3,11 +3,7 @@
 //
 // RV32I branch condition comparator.
 //
-// This
-
-import rv32i_types_pkg::*;
-
-module evaluates both conditional branches and unconditional jumps.
+// This module evaluates both conditional branches and unconditional jumps.
 // It is purely combinational and produces no architectural state.
 
 module rv32i_branch_compare (
@@ -18,6 +14,7 @@ module rv32i_branch_compare (
     output logic                         branch_taken_o
 );
 
+    import rv32i_types_pkg::*;
 
     always_comb begin
         branch_taken_o = 1'b0;

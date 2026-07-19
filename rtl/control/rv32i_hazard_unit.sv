@@ -11,8 +11,6 @@
 // This unit intentionally handles only load-use hazards. ALU-to-ALU
 // forwarding is implemented in Step 6E.
 
-import rv32i_pkg::*;
-
 module rv32i_hazard_unit (
     input  logic                  id_valid_i,
     input  rv32i_pkg::reg_idx_t   id_rs1_index_i,
@@ -35,6 +33,7 @@ module rv32i_hazard_unit (
     output logic                  load_use_stall_o
 );
 
+    import rv32i_pkg::*;
 
     logic ex_is_load;
     logic mem_is_load;

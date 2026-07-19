@@ -13,9 +13,6 @@
 // This unit forwards the raw register operand values. Operand-A/Operand-B
 // selection is still handled later by rv32i_operand_mux.
 
-import rv32i_pkg::*;
-import rv32i_types_pkg::*;
-
 module rv32i_forwarding_unit (
     input  logic                  ex_valid_i,
 
@@ -50,6 +47,8 @@ module rv32i_forwarding_unit (
     output logic                  rs2_forwarded_o
 );
 
+    import rv32i_pkg::*;
+    import rv32i_types_pkg::*;
 
     logic mem_forward_allowed;
     logic wb_forward_allowed;

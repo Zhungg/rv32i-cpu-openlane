@@ -14,9 +14,6 @@
 // Unsupported CSR addresses return illegal access indication.
 // Full privilege checking is intentionally deferred.
 
-import rv32i_pkg::*;
-import rv32i_csr_pkg::*;
-
 module rv32i_csr_file #(
     parameter logic [31:0] MTVEC_RESET = 32'h0000_0100
 ) (
@@ -52,6 +49,8 @@ module rv32i_csr_file #(
     output rv32i_pkg::addr_t              mret_redirect_pc_o
 );
 
+    import rv32i_pkg::*;
+    import rv32i_csr_pkg::*;
 
     localparam logic [11:0] CSR_ADDR_MSTATUS = 12'h300;
     localparam logic [11:0] CSR_ADDR_MTVEC   = 12'h305;

@@ -14,10 +14,6 @@
 // Stores are considered complete only after a D-memory response is accepted.
 // This avoids retiring a store before the memory system confirms success.
 
-import rv32i_pkg::*;
-import rv32i_csr_pkg::*;
-import rv32i_types_pkg::*;
-
 module rv32i_lsu (
     input  logic                              clk_i,
     input  logic                              rst_ni,
@@ -44,6 +40,9 @@ module rv32i_lsu (
     input  rv32i_types_pkg::dmem_response_t   dmem_rsp_i
 );
 
+    import rv32i_pkg::*;
+    import rv32i_types_pkg::*;
+    import rv32i_csr_pkg::*;
 
     logic           misaligned;
     xlen_t          aligned_store_data;
