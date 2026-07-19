@@ -1,0 +1,5 @@
+RUN_DIR: openlane/rv32i_core/runs/RUN_2026-07-19_16-53-47
+METRICS_SOURCE: openlane/rv32i_core/runs/RUN_2026-07-19_16-53-47/72-misc-reportmanufacturability/state_out.json
+
+
+---- Additional matched metrics ----

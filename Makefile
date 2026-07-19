@@ -145,3 +145,7 @@ check-yosys-synthesis-readiness:
 .PHONY: generate-openlane-rtl
 generate-openlane-rtl:
 	bash scripts/generate_openlane_rtl.sh
+
+.PHONY: extract-openlane-qor
+extract-openlane-qor:
+	bash scripts/extract_openlane_qor.sh
