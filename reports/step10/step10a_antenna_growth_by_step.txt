@@ -1,0 +1,6 @@
+STEP                                                         ANTENNA CELLS       DELTA      ANT AREA    DIODE METRIC    ANT PINS
+--------------------------------------------------------------------------------------------------------------------------------
+43-odb-heuristicdiodeinsertion/2-openroad-detailedplacemen           46808           0        117132            None         329
+44-openroad-repairantennas/1-diodeinsertion                          48487        1679        121334            1679           2
+46-openroad-repairantennas-1/1-diodeinsertion                        50279        1792        125818            1792          48
+48-openroad-detailedrouting                                          50346          67        125986              67           0

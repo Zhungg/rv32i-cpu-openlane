@@ -1,0 +1,24 @@
+RV32I STEP 10C - TARGETED ANTENNA ECO
+
+Run:
+openlane/rv32i_core/runs/RUN_2026-07-20_16-34-01
+
+Physical verification:
+Antenna: PASS
+DRC: PASS
+LVS: PASS
+
+Final physical counts:
+Total components: 104106
+Diode components: 2968
+Diode percentage: 2.851%
+
+Antenna strategy:
+RUN_HEURISTIC_DIODE_INSERTION=false
+Target ECO sink: _27869_/A1
+Violating net: net763
+Original P/R: 3.39
+
+Result:
+One targeted diode was added.
+Antenna violations reduced from 1 net / 1 pin to zero.

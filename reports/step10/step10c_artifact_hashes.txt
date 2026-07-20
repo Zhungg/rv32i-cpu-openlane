@@ -1,0 +1,9 @@
+Run:
+openlane/rv32i_core/runs/RUN_2026-07-20_16-34-01
+
+Final DEF:
+openlane/rv32i_core/runs/RUN_2026-07-20_16-34-01/final/def/rv32i_core.def
+
+Hashes:
+f242686da5cd97183faad92583cbbb9659fd2a9b4cbac5cba91081ede26acb1d  openlane/rv32i_core/config.json
+d20bdc8e1af502fc815fa2c937144a8f97929c544cf5db1819c2c649a3737707  openlane/rv32i_core/runs/RUN_2026-07-20_16-34-01/final/def/rv32i_core.def
