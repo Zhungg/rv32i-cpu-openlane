@@ -48,6 +48,8 @@ module rv32i_id_ex (
     assign valid_o   = valid_q;
     assign payload_o = payload_q;
 
+    // Valid is architectural control state. Reset, flush and kill only
+    // invalidate the stage entry.
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
             valid_q <= 1'b0;
@@ -57,11 +59,18 @@ module rv32i_id_ex (
         end
         else if (ready_o) begin
             valid_q <= valid_i;
+        end
+    end
 
-            // Avoid unnecessary payload toggling when inserting a bubble.
-            if (valid_i) begin
-                payload_q <= payload_i;
-            end
+    // Payload is meaningful only while valid_q is asserted.
+    //
+    // Do not gate this register bank with flush_i or kill_i. During a flush,
+    // payload_q may capture an incoming value, but valid_q is cleared on the
+    // same edge, so that value is architecturally invisible. This removes
+    // the late redirect/kill control cone from every ID/EX payload D input.
+    always_ff @(posedge clk_i) begin
+        if (ready_o && valid_i) begin
+            payload_q <= payload_i;
         end
     end
 

@@ -1,0 +1,11 @@
+==================================================
+STEP 11S — ID/EX PAYLOAD SPLIT ACCEPTANCE GATE
+==================================================
+Functional regression RC     : 0 — PASS
+RTL source-list RC           : 0 — PASS
+Yosys synthesis readiness RC : 0 — PASS
+
+Source RTL payload split     : PASS
+Generated RTL payload split  : PASS
+
+STEP 11S ACCEPTANCE GATE     : PASS

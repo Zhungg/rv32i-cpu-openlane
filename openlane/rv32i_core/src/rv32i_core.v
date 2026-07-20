@@ -403,7 +403,6 @@ module rv32i_fetch_unit (
 			pending_pc_plus_4_q <= 1'sb0;
 			pending_prediction_q <= 1'sb0;
 			buffer_valid_q <= 1'b0;
-			buffer_payload_q <= 1'sb0;
 		end
 		else if (redirect_valid_i) begin
 			pc_q <= redirect_pc_i;
@@ -417,14 +416,8 @@ module rv32i_fetch_unit (
 				buffer_valid_q <= 1'b0;
 			if (response_fire) begin
 				pending_valid_q <= 1'b0;
-				if (pending_valid_q && (imem_rsp_i[3-:rv32i_types_pkg_FETCH_EPOCH_W] == epoch_q)) begin
+				if (pending_valid_q && (imem_rsp_i[3-:rv32i_types_pkg_FETCH_EPOCH_W] == epoch_q))
 					buffer_valid_q <= 1'b1;
-					buffer_payload_q <= 1'sb0;
-					buffer_payload_q[147-:32] <= pending_pc_q;
-					buffer_payload_q[115-:32] <= imem_rsp_i[36-:32];
-					buffer_payload_q[83-:83] <= pending_prediction_q;
-					buffer_payload_q[0] <= imem_rsp_i[4];
-				end
 			end
 			if (request_fire) begin
 				pending_valid_q <= 1'b1;
@@ -432,6 +425,13 @@ module rv32i_fetch_unit (
 				pending_pc_plus_4_q <= pc_q + 32'd4;
 				pending_prediction_q <= current_prediction;
 			end
+		end
+	always @(posedge clk_i)
+		if ((response_fire && pending_valid_q) && (imem_rsp_i[3-:rv32i_types_pkg_FETCH_EPOCH_W] == epoch_q)) begin
+			buffer_payload_q[147-:32] <= pending_pc_q;
+			buffer_payload_q[115-:32] <= imem_rsp_i[36-:32];
+			buffer_payload_q[83-:83] <= pending_prediction_q;
+			buffer_payload_q[0] <= imem_rsp_i[4];
 		end
 endmodule
 module rv32i_alu_decoder (
@@ -1936,11 +1936,11 @@ module rv32i_id_ex (
 			valid_q <= 1'b0;
 		else if (flush_i || kill_i)
 			valid_q <= 1'b0;
-		else if (ready_o) begin
+		else if (ready_o)
 			valid_q <= valid_i;
-			if (valid_i)
-				payload_q <= payload_i;
-		end
+	always @(posedge clk_i)
+		if (ready_o && valid_i)
+			payload_q <= payload_i;
 	initial _sv2v_0 = 0;
 endmodule
 module rv32i_ex_mem (
