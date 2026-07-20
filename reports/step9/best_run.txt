@@ -1,0 +1,1 @@
+/home/zhung/projects/rv32i_cpu_project/openlane/rv32i_core/runs/RUN_2026-07-19_21-28-42

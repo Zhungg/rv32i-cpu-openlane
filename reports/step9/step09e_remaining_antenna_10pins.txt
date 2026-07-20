@@ -1,0 +1,10 @@
+_07574_	clone13/A0	met3	P/R=3.13	Partial=1253.82	Required=400.00
+_07611_	clone42/A0	met3	P/R=1.14	Partial=455.18	Required=400.00
+_13804_	_28042_/A	met1	P/R=1.42	Partial=567.89	Required=400.00
+net238	_19968_/C1	met3	P/R=1.13	Partial=450.88	Required=400.00
+net342	output342/A	met1	P/R=1.50	Partial=598.63	Required=400.00
+net387	_21015_/S	met1	P/R=1.23	Partial=491.50	Required=400.00
+net742	_31840_/RESET_B	met2	P/R=1.12	Partial=449.07	Required=400.00
+u_datapath.ex_exception[41\]	_27753_/A0	met1	P/R=1.74	Partial=694.28	Required=400.00
+u_datapath.ex_exception[60\]	_23689_/A1	met1	P/R=1.01	Partial=402.28	Required=400.00
+u_datapath.ex_exception[62\]	_15733_/A	met1	P/R=1.45	Partial=578.50	Required=400.00

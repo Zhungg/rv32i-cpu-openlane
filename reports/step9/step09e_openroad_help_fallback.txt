@@ -1,0 +1,8 @@
+OpenROAD edf00dff99f6c40d67a30c0e22a8191c5d2ed9d6 
+Features included (+) or not (-): +Charts +GPU +GUI +Python
+This program is licensed under the BSD-3 license. See the LICENSE file for details.
+Components of this program may be licensed under more restrictive licenses which must be honored.
+openroad> 
+openroad> help repair_antennas
+repair_antennas diode_cell [-iterations iterations] [-ratio_margin ratio_margin] 
+openroad> exit

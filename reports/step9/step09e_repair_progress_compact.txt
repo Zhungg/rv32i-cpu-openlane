@@ -1,0 +1,28 @@
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:7:-congestion_iterations 50 -verbose
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:38:[INFO GRT-0101] Running extra iterations to remove overflow.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:59:[INFO GRT-0006] Repairing antennas, iteration 1.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:62:[INFO GRT-0015] Inserted 271 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:66:[INFO GRT-0006] Repairing antennas, iteration 2.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:69:[INFO GRT-0015] Inserted 225 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:73:[INFO GRT-0006] Repairing antennas, iteration 3.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:76:[INFO GRT-0015] Inserted 219 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:80:[INFO GRT-0006] Repairing antennas, iteration 4.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:83:[INFO GRT-0015] Inserted 214 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:87:[INFO GRT-0006] Repairing antennas, iteration 5.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:90:[INFO GRT-0015] Inserted 216 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:94:[INFO GRT-0006] Repairing antennas, iteration 6.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:97:[INFO GRT-0015] Inserted 223 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:101:[INFO GRT-0006] Repairing antennas, iteration 7.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:104:[INFO GRT-0015] Inserted 216 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:108:[INFO GRT-0006] Repairing antennas, iteration 8.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:111:[INFO GRT-0015] Inserted 225 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:115:[INFO GRT-0006] Repairing antennas, iteration 9.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:118:[INFO GRT-0015] Inserted 218 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:122:[INFO GRT-0006] Repairing antennas, iteration 10.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:125:[INFO GRT-0015] Inserted 222 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:129:[INFO GRT-0006] Repairing antennas, iteration 11.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:132:[INFO GRT-0015] Inserted 214 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:136:[INFO GRT-0006] Repairing antennas, iteration 12.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:139:[INFO GRT-0015] Inserted 236 diodes.
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:156:-congestion_iterations 50 -verbose
+openlane/rv32i_core/runs/RUN_2026-07-20_01-59-01/02-openroad-repairantennas-1/1-diodeinsertion/diodeinsertion.log:187:[INFO GRT-0101] Running extra iterations to remove overflow.

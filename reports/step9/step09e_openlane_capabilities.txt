@@ -1,0 +1,284 @@
+========================================================================
+OPENLANE INFORMATION
+========================================================================
+Version: 2.3.10
+Package: /nix/store/2wavfqsjdbva1zmfimvjr9vbqp1n8g2p-python3.11-openlane-2.3.10/lib/python3.11/site-packages/openlane/__init__.py
+
+========================================================================
+ALL ANTENNA / DIODE / ODB STEPS
+========================================================================
+Odb.CheckDesignAntennaProperties
+Odb.CheckMacroAntennaProperties
+Odb.DiodesOnPorts
+Odb.FuzzyDiodePlacement
+Odb.HeuristicDiodeInsertion
+Odb.PortDiodePlacement
+OpenROAD.CheckAntennas
+OpenROAD.RepairAntennas
+
+========================================================================
+CANDIDATE STEP DETAILS
+========================================================================
+
+--- Odb.InsertECODiodes ---
+STATUS: NOT FOUND
+
+--- Odb.HeuristicDiodeInsertion ---
+STATUS: FOUND
+Class: <class 'openlane.steps.odb.HeuristicDiodeInsertion'>
+Module: openlane.steps.odb
+Source file: /nix/store/ss2cw3sxbrwwx9jl0rrppbw4kgcmgi2n-python3-3.11.9-env/lib/python3.11/site-packages/openlane/steps/odb.py
+Configuration variables:
+  HEURISTIC_ANTENNA_THRESHOLD
+    type    = <class 'decimal.Decimal'>
+    default = None
+  GPL_CELL_PADDING
+    type    = <class 'decimal.Decimal'>
+    default = None
+  PDN_CONNECT_MACROS_TO_GRID
+    type    = <class 'bool'>
+    default = True
+  PDN_MACRO_CONNECTIONS
+    type    = typing.Optional[typing.List[str]]
+    default = None
+  PDN_ENABLE_GLOBAL_CONNECTIONS
+    type    = <class 'bool'>
+    default = True
+  PNR_SDC_FILE
+    type    = typing.Optional[openlane.common.types.Path]
+    default = None
+  FP_DEF_TEMPLATE
+    type    = typing.Optional[openlane.common.types.Path]
+    default = None
+  PL_OPTIMIZE_MIRRORING
+    type    = <class 'bool'>
+    default = True
+  PL_MAX_DISPLACEMENT_X
+    type    = <class 'decimal.Decimal'>
+    default = 500
+  PL_MAX_DISPLACEMENT_Y
+    type    = <class 'decimal.Decimal'>
+    default = 100
+  DPL_CELL_PADDING
+    type    = <class 'decimal.Decimal'>
+    default = None
+  RT_CLOCK_MIN_LAYER
+    type    = typing.Optional[str]
+    default = None
+  RT_CLOCK_MAX_LAYER
+    type    = typing.Optional[str]
+    default = None
+  GRT_ADJUSTMENT
+    type    = <class 'decimal.Decimal'>
+    default = 0.3
+  GRT_MACRO_EXTENSION
+    type    = <class 'int'>
+    default = 0
+  GRT_LAYER_ADJUSTMENTS
+    type    = typing.List[decimal.Decimal]
+    default = None
+  DIODE_PADDING
+    type    = typing.Optional[int]
+    default = None
+  GRT_ALLOW_CONGESTION
+    type    = <class 'bool'>
+    default = False
+  GRT_ANTENNA_ITERS
+    type    = <class 'int'>
+    default = 3
+  GRT_OVERFLOW_ITERS
+    type    = <class 'int'>
+    default = 50
+  GRT_ANTENNA_MARGIN
+    type    = <class 'int'>
+    default = 10
+
+--- Odb.FuzzyDiodeInsertion ---
+STATUS: NOT FOUND
+
+--- Odb.DiodesOnPorts ---
+STATUS: FOUND
+Class: <class 'openlane.steps.odb.DiodesOnPorts'>
+Module: openlane.steps.odb
+Source file: /nix/store/ss2cw3sxbrwwx9jl0rrppbw4kgcmgi2n-python3-3.11.9-env/lib/python3.11/site-packages/openlane/steps/odb.py
+Configuration variables:
+  DIODE_ON_PORTS
+    type    = typing.Literal['none', 'in', 'out', 'both']
+    default = none
+  GPL_CELL_PADDING
+    type    = <class 'decimal.Decimal'>
+    default = None
+  PDN_CONNECT_MACROS_TO_GRID
+    type    = <class 'bool'>
+    default = True
+  PDN_MACRO_CONNECTIONS
+    type    = typing.Optional[typing.List[str]]
+    default = None
+  PDN_ENABLE_GLOBAL_CONNECTIONS
+    type    = <class 'bool'>
+    default = True
+  PNR_SDC_FILE
+    type    = typing.Optional[openlane.common.types.Path]
+    default = None
+  FP_DEF_TEMPLATE
+    type    = typing.Optional[openlane.common.types.Path]
+    default = None
+  PL_OPTIMIZE_MIRRORING
+    type    = <class 'bool'>
+    default = True
+  PL_MAX_DISPLACEMENT_X
+    type    = <class 'decimal.Decimal'>
+    default = 500
+  PL_MAX_DISPLACEMENT_Y
+    type    = <class 'decimal.Decimal'>
+    default = 100
+  DPL_CELL_PADDING
+    type    = <class 'decimal.Decimal'>
+    default = None
+  RT_CLOCK_MIN_LAYER
+    type    = typing.Optional[str]
+    default = None
+  RT_CLOCK_MAX_LAYER
+    type    = typing.Optional[str]
+    default = None
+  GRT_ADJUSTMENT
+    type    = <class 'decimal.Decimal'>
+    default = 0.3
+  GRT_MACRO_EXTENSION
+    type    = <class 'int'>
+    default = 0
+  GRT_LAYER_ADJUSTMENTS
+    type    = typing.List[decimal.Decimal]
+    default = None
+  DIODE_PADDING
+    type    = typing.Optional[int]
+    default = None
+  GRT_ALLOW_CONGESTION
+    type    = <class 'bool'>
+    default = False
+  GRT_ANTENNA_ITERS
+    type    = <class 'int'>
+    default = 3
+  GRT_OVERFLOW_ITERS
+    type    = <class 'int'>
+    default = 50
+  GRT_ANTENNA_MARGIN
+    type    = <class 'int'>
+    default = 10
+
+--- Odb.DiodePortInsertion ---
+STATUS: NOT FOUND
+
+--- Odb.PortDiodePlacement ---
+STATUS: FOUND
+Class: <class 'openlane.steps.odb.PortDiodePlacement'>
+Module: openlane.steps.odb
+Source file: /nix/store/ss2cw3sxbrwwx9jl0rrppbw4kgcmgi2n-python3-3.11.9-env/lib/python3.11/site-packages/openlane/steps/odb.py
+Configuration variables:
+  DIODE_ON_PORTS
+    type    = typing.Literal['none', 'in', 'out', 'both']
+    default = none
+  GPL_CELL_PADDING
+    type    = <class 'decimal.Decimal'>
+    default = None
+
+--- OpenROAD.RepairAntennas ---
+STATUS: FOUND
+Class: <class 'openlane.steps.openroad.RepairAntennas'>
+Module: openlane.steps.openroad
+Source file: /nix/store/ss2cw3sxbrwwx9jl0rrppbw4kgcmgi2n-python3-3.11.9-env/lib/python3.11/site-packages/openlane/steps/openroad.py
+Configuration variables:
+  PDN_CONNECT_MACROS_TO_GRID
+    type    = <class 'bool'>
+    default = True
+  PDN_MACRO_CONNECTIONS
+    type    = typing.Optional[typing.List[str]]
+    default = None
+  PDN_ENABLE_GLOBAL_CONNECTIONS
+    type    = <class 'bool'>
+    default = True
+  PNR_SDC_FILE
+    type    = typing.Optional[openlane.common.types.Path]
+    default = None
+  FP_DEF_TEMPLATE
+    type    = typing.Optional[openlane.common.types.Path]
+    default = None
+  RT_CLOCK_MIN_LAYER
+    type    = typing.Optional[str]
+    default = None
+  RT_CLOCK_MAX_LAYER
+    type    = typing.Optional[str]
+    default = None
+  GRT_ADJUSTMENT
+    type    = <class 'decimal.Decimal'>
+    default = 0.3
+  GRT_MACRO_EXTENSION
+    type    = <class 'int'>
+    default = 0
+  GRT_LAYER_ADJUSTMENTS
+    type    = typing.List[decimal.Decimal]
+    default = None
+  DIODE_PADDING
+    type    = typing.Optional[int]
+    default = None
+  GRT_ALLOW_CONGESTION
+    type    = <class 'bool'>
+    default = False
+  GRT_ANTENNA_ITERS
+    type    = <class 'int'>
+    default = 3
+  GRT_OVERFLOW_ITERS
+    type    = <class 'int'>
+    default = 50
+  GRT_ANTENNA_MARGIN
+    type    = <class 'int'>
+    default = 10
+  PL_OPTIMIZE_MIRRORING
+    type    = <class 'bool'>
+    default = True
+  PL_MAX_DISPLACEMENT_X
+    type    = <class 'decimal.Decimal'>
+    default = 500
+  PL_MAX_DISPLACEMENT_Y
+    type    = <class 'decimal.Decimal'>
+    default = 100
+  DPL_CELL_PADDING
+    type    = <class 'decimal.Decimal'>
+    default = None
+
+--- OpenROAD.CheckAntennas ---
+STATUS: FOUND
+Class: <class 'openlane.steps.openroad.CheckAntennas'>
+Module: openlane.steps.openroad
+Source file: /nix/store/ss2cw3sxbrwwx9jl0rrppbw4kgcmgi2n-python3-3.11.9-env/lib/python3.11/site-packages/openlane/steps/openroad.py
+Configuration variables:
+  PDN_CONNECT_MACROS_TO_GRID
+    type    = <class 'bool'>
+    default = True
+  PDN_MACRO_CONNECTIONS
+    type    = typing.Optional[typing.List[str]]
+    default = None
+  PDN_ENABLE_GLOBAL_CONNECTIONS
+    type    = <class 'bool'>
+    default = True
+  PNR_SDC_FILE
+    type    = typing.Optional[openlane.common.types.Path]
+    default = None
+  FP_DEF_TEMPLATE
+    type    = typing.Optional[openlane.common.types.Path]
+    default = None
+
+========================================================================
+CLASSIC FLOW ORDER
+========================================================================
+13: Odb.CheckMacroAntennaProperties
+32: OpenROAD.DetailedPlacement
+37: OpenROAD.GlobalRouting
+38: OpenROAD.CheckAntennas
+40: Odb.DiodesOnPorts
+41: Odb.HeuristicDiodeInsertion
+42: OpenROAD.RepairAntennas
+43: OpenROAD.ResizerTimingPostGRT
+45: OpenROAD.DetailedRouting
+47: OpenROAD.CheckAntennas-1
+61: Odb.CheckDesignAntennaProperties
