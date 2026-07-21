@@ -48,6 +48,7 @@ module rv32i_if_id (
     assign valid_o   = valid_q;
     assign payload_o = payload_q;
 
+    // Reset, flush and kill affect only the architectural validity state.
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
             valid_q <= 1'b0;
@@ -57,11 +58,20 @@ module rv32i_if_id (
         end
         else if (ready_o) begin
             valid_q <= valid_i;
+        end
+    end
 
-            // Avoid unnecessary payload toggling when inserting a bubble.
-            if (valid_i) begin
-                payload_q <= payload_i;
-            end
+    // The payload is architecturally meaningful only while valid_q is high.
+    //
+    // Payload capture intentionally does not depend on flush_i or kill_i.
+    // A payload captured during a flush cycle is invalidated by valid_q and
+    // therefore cannot propagate as an architectural pipeline transaction.
+    //
+    // Keeping flush/kill out of this enable cone prevents the late redirect
+    // path from driving the D-input hold/load muxes of the full IF/ID payload.
+    always_ff @(posedge clk_i) begin
+        if (ready_o && valid_i) begin
+            payload_q <= payload_i;
         end
     end
 

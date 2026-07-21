@@ -1890,11 +1890,11 @@ module rv32i_if_id (
 			valid_q <= 1'b0;
 		else if (flush_i || kill_i)
 			valid_q <= 1'b0;
-		else if (ready_o) begin
+		else if (ready_o)
 			valid_q <= valid_i;
-			if (valid_i)
-				payload_q <= payload_i;
-		end
+	always @(posedge clk_i)
+		if (ready_o && valid_i)
+			payload_q <= payload_i;
 	initial _sv2v_0 = 0;
 endmodule
 module rv32i_id_ex (
