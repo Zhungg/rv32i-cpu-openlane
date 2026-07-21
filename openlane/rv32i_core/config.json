@@ -43,9 +43,5 @@
   "DRT_ANTENNA_REPAIR_ITERS": 3,
   "DRT_ANTENNA_MARGIN": 20,
   "DRT_OPT_ITERS": 64,
-  "INSERT_ECO_DIODES": [
-    {
-      "target": "_27869_/A1"
-    }
-  ]
+  "INSERT_ECO_DIODES": []
 }

@@ -282,21 +282,23 @@ module rv32i_datapath #(
         trap_redirect_valid ||
         mret_redirect_valid;
 
-    always @* begin
-        frontend_redirect_valid = 1'b0;
-        frontend_redirect_pc    = '0;
+    // STEP 11AH: Redirect valid/data decoupling.
+    //
+    // Trap, MRET and EX branch targets are continuously available.
+    // Keep redirect qualification separate from the 32-bit target cone.
+    assign frontend_redirect_valid =
+        commit_redirect_valid ||
+        branch_redirect;
 
+    always_comb begin
         if (trap_redirect_valid) begin
-            frontend_redirect_valid = 1'b1;
-            frontend_redirect_pc    = trap_redirect_pc;
+            frontend_redirect_pc = trap_redirect_pc;
         end
         else if (mret_redirect_valid) begin
-            frontend_redirect_valid = 1'b1;
-            frontend_redirect_pc    = mret_redirect_pc;
+            frontend_redirect_pc = mret_redirect_pc;
         end
-        else if (branch_redirect) begin
-            frontend_redirect_valid = 1'b1;
-            frontend_redirect_pc    = actual_next_pc;
+        else begin
+            frontend_redirect_pc = actual_next_pc;
         end
     end
 
