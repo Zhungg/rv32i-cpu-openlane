@@ -99,6 +99,9 @@ module rv32i_datapath #(
 
     logic           id_instruction_supported;
     logic           id_load_use_stall;
+    logic           id_serialization_stall;
+    logic           older_pipeline_busy;
+    logic           serializing_inflight;
     logic           id_ex_input_ready;
 
     // ==================================================================
@@ -396,6 +399,43 @@ module rv32i_datapath #(
         .load_use_stall_o    (id_load_use_stall)
     );
 
+    // STEP 11BC-B1: Activate the decoder serialization contract.
+    //
+    // A serializing instruction in ID waits until all older pipeline
+    // transactions have drained. Once a serializing instruction is in
+    // flight, younger instructions remain held in IF/ID until it retires.
+    assign older_pipeline_busy =
+        id_ex_valid ||
+        ex_mem_valid ||
+        mem_wb_valid;
+
+    assign serializing_inflight =
+        (
+            id_ex_valid &&
+            id_ex_payload.control.serializing
+        ) ||
+        (
+            ex_mem_valid &&
+            ex_mem_payload.control.serializing
+        ) ||
+        (
+            mem_wb_valid &&
+            mem_wb_payload.control.serializing
+        );
+
+    assign id_serialization_stall =
+        if_id_valid &&
+        (
+            (
+                decoded_control.serializing &&
+                older_pipeline_busy
+            ) ||
+            (
+                !decoded_control.serializing &&
+                serializing_inflight
+            )
+        );
+
     // ==================================================================
     // Writeback selection
     // ==================================================================
@@ -525,7 +565,8 @@ module rv32i_datapath #(
     assign if_id_downstream_ready =
         id_ex_input_ready &&
         id_instruction_supported &&
-        !id_load_use_stall;
+        !id_load_use_stall &&
+        !id_serialization_stall;
 
     // ==================================================================
     // ID/EX pipeline register
@@ -543,7 +584,8 @@ module rv32i_datapath #(
         .valid_i   (
             if_id_valid &&
             id_instruction_supported &&
-            !id_load_use_stall
+            !id_load_use_stall &&
+            !id_serialization_stall
         ),
         .ready_o   (id_ex_input_ready),
         .payload_i (id_ex_payload_d),
@@ -871,9 +913,20 @@ module rv32i_datapath #(
     always_comb begin
         mem_exception = ex_mem_payload.exception;
 
-        if (lsu_exception.valid) begin
-            mem_exception     = lsu_exception;
-            mem_exception.epc = ex_mem_payload.pc;
+        // Preserve exceptions detected in earlier stages.
+        if (!mem_exception.valid) begin
+            if (lsu_exception.valid) begin
+                mem_exception     = lsu_exception;
+                mem_exception.epc = ex_mem_payload.pc;
+            end
+            else if (csr_read_illegal) begin
+                mem_exception.valid        = 1'b1;
+                mem_exception.is_interrupt = 1'b0;
+                mem_exception.cause        = EXC_ILLEGAL_INSTRUCTION;
+                mem_exception.epc          = ex_mem_payload.pc;
+                mem_exception.tval         =
+                    ex_mem_payload.instruction;
+            end
         end
     end
 
