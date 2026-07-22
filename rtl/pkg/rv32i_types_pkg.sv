@@ -248,6 +248,9 @@ package rv32i_types_pkg;
         logic [31:0]         instruction;
         logic [4:0]      rd_index;
 
+        // STEP 11AU: Register final writeback data in the MEM/WB payload.
+        logic [31:0]         writeback_data;
+
         logic [31:0]         alu_result;
         logic [31:0]         memory_result;
         logic [31:0]         pc_plus_4;

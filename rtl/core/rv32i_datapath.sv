@@ -400,36 +400,12 @@ module rv32i_datapath #(
     // Writeback selection
     // ==================================================================
 
-    always_comb begin
-        writeback_data = '0;
-
-        case (mem_wb_payload.control.wb_sel)
-            WB_ALU,
-            WB_IMMEDIATE: begin
-                writeback_data = mem_wb_payload.alu_result;
-            end
-
-            WB_MEMORY: begin
-                writeback_data = mem_wb_payload.memory_result;
-            end
-
-            WB_PC_PLUS_4: begin
-                writeback_data = mem_wb_payload.pc_plus_4;
-            end
-
-            WB_CSR: begin
-                writeback_data = mem_wb_payload.csr_read_data;
-            end
-
-            WB_NONE: begin
-                writeback_data = '0;
-            end
-
-            default: begin
-                writeback_data = '0;
-            end
-        endcase
-    end
+    // STEP 11AU: Register final writeback data in the MEM/WB payload.
+    //
+    // Source selection is performed before the MEM/WB register so that
+    // wb_sel decoding is removed from the WB-forwarding-to-EX path.
+    assign writeback_data =
+        mem_wb_payload.writeback_data;
 
     assign register_write_enable =
         mem_wb_valid &&
@@ -932,6 +908,39 @@ module rv32i_datapath #(
 
         mem_wb_payload_d.rd_index =
             ex_mem_payload.rd_index;
+
+
+        // STEP 11AU: Select final writeback data before MEM/WB capture.
+        case (ex_mem_payload.control.wb_sel)
+            WB_ALU,
+            WB_IMMEDIATE: begin
+                mem_wb_payload_d.writeback_data =
+                    ex_mem_payload.alu_result;
+            end
+
+            WB_MEMORY: begin
+                mem_wb_payload_d.writeback_data =
+                    lsu_load_data;
+            end
+
+            WB_PC_PLUS_4: begin
+                mem_wb_payload_d.writeback_data =
+                    ex_mem_payload.pc_plus_4;
+            end
+
+            WB_CSR: begin
+                mem_wb_payload_d.writeback_data =
+                    csr_read_data;
+            end
+
+            WB_NONE: begin
+                mem_wb_payload_d.writeback_data = '0;
+            end
+
+            default: begin
+                mem_wb_payload_d.writeback_data = '0;
+            end
+        endcase
 
         mem_wb_payload_d.alu_result =
             ex_mem_payload.alu_result;
