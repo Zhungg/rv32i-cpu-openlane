@@ -729,22 +729,32 @@ module rv32i_datapath #(
         !ex_exception.valid;
 
 
+    // STEP 11AR: Train the branch predictor from registered EX/MEM state.
+    //
+    // Redirect resolution remains in EX.  Predictor training occurs when
+    // the corresponding EX/MEM transaction advances, removing the BTB
+    // update network from the combinational EX-to-fetch redirect cone.
+    //
+    // commit_redirect_valid suppresses training for an EX/MEM instruction
+    // that is being invalidated by an older trap or MRET redirect.
     assign predictor_update_valid =
-        ex_fire &&
-        branch_active &&
-        !ex_exception.valid;
+        ex_mem_valid &&
+        mem_stage_ready &&
+        (ex_mem_payload.control.branch_op != BR_NONE) &&
+        !ex_mem_payload.exception.valid &&
+        !commit_redirect_valid;
 
     assign predictor_update_pc =
-        id_ex_payload.pc;
+        ex_mem_payload.pc;
 
     assign predictor_update_taken =
-        branch_taken;
+        ex_mem_payload.branch_taken;
 
     assign predictor_update_target =
-        actual_next_pc;
+        ex_mem_payload.actual_next_pc;
 
     assign predictor_update_pht_index =
-        id_ex_payload.prediction.pht_index;
+        ex_mem_payload.prediction.pht_index;
 
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
@@ -759,7 +769,7 @@ module rv32i_datapath #(
             bpu_branch_count_q <=
                 bpu_branch_count_q + 32'd1;
 
-            if (branch_mispredict) begin
+            if (ex_mem_payload.branch_mispredict) begin
                 bpu_mispredict_count_q <=
                     bpu_mispredict_count_q + 32'd1;
             end
@@ -768,12 +778,12 @@ module rv32i_datapath #(
                     bpu_correct_count_q + 32'd1;
             end
 
-            if (id_ex_payload.prediction.predicted_taken) begin
+            if (ex_mem_payload.prediction.predicted_taken) begin
                 bpu_predicted_taken_count_q <=
                     bpu_predicted_taken_count_q + 32'd1;
             end
 
-            if (branch_taken) begin
+            if (ex_mem_payload.branch_taken) begin
                 bpu_actual_taken_count_q <=
                     bpu_actual_taken_count_q + 32'd1;
             end
