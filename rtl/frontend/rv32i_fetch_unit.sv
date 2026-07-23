@@ -54,6 +54,7 @@ module rv32i_fetch_unit #(
     logic               can_issue_request;
     logic               response_is_current;
     logic               response_enqueue;
+    logic               redirect_block_q;
 
     logic [FETCH_EPOCH_W-1:0] epoch_q;
     logic [FETCH_EPOCH_W-1:0] request_epoch;
@@ -132,9 +133,18 @@ module rv32i_fetch_unit #(
         response_fire;
 
     // Do not launch an old-path request during a redirect cycle.
+        // STEP 11BG-B: Registered redirect suppression.
+    //
+    // redirect_valid_i previously gated this output directly, creating a
+    // MEM/WB-to-output critical path through trap/MRET redirect logic.
+    //
+    // redirect_block_q removes that combinational path. A request accepted
+    // during the redirect cycle is tracked as an outstanding stale request
+    // and discarded later through the existing epoch mechanism.
     assign imem_req_valid_o =
         can_issue_request &&
-        !redirect_valid_i;
+        !redirect_block_q;
+
 
     assign request_fire =
         imem_req_valid_o &&
@@ -216,8 +226,15 @@ module rv32i_fetch_unit #(
 
             skid_valid_q         <= 1'b0;
             skid_payload_q       <= '0;
+
+            redirect_block_q     <= 1'b0;
         end
         else begin
+            // Block request issue during the cycle immediately following
+            // a redirect. The redirect itself still updates PC/epoch and
+            // flushes buffered old-path instructions at this clock edge.
+            redirect_block_q <= redirect_valid_i;
+
             // ----------------------------------------------------------
             // Outstanding request lifetime
             // ----------------------------------------------------------
