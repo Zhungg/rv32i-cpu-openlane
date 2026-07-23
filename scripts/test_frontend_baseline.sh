@@ -19,6 +19,10 @@ SOURCES=(
 
     rtl/frontend/rv32i_pc.sv
     rtl/frontend/rv32i_fetch_buffer.sv
+    rtl/predict/rv32i_ghr.sv \
+    rtl/predict/rv32i_pht.sv \
+    rtl/predict/rv32i_btb.sv \
+    rtl/predict/rv32i_branch_predictor.sv \
     rtl/frontend/rv32i_fetch_unit.sv
 
     tb/unit/tb_rv32i_fetch_unit.sv

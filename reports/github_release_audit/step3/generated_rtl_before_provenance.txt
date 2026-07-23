@@ -1,0 +1,6 @@
+The generated_rtl_before.sha256 baseline was reconstructed from
+reports/signoff/source_manifest.sha256.
+
+Immediately before RTL regeneration, the complete source manifest was verified
+with sha256sum -c and openlane/rv32i_core/src/rv32i_core.v reported OK.
+Therefore, the manifest hash represents the verified pre-regeneration state.

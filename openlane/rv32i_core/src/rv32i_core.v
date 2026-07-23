@@ -323,7 +323,11 @@ module rv32i_fetch_unit (
 	reg [31:0] pc_next;
 	wire request_fire;
 	wire response_fire;
+	wire fetch_fire;
 	wire can_issue_request;
+	wire response_is_current;
+	wire response_enqueue;
+	reg redirect_block_q;
 	reg [3:0] epoch_q;
 	wire [3:0] request_epoch;
 	reg pending_valid_q;
@@ -332,6 +336,9 @@ module rv32i_fetch_unit (
 	reg [82:0] pending_prediction_q;
 	reg buffer_valid_q;
 	reg [147:0] buffer_payload_q;
+	reg skid_valid_q;
+	reg [147:0] skid_payload_q;
+	reg [147:0] response_payload;
 	wire predict_taken;
 	wire [31:0] predict_pc;
 	wire [7:0] predict_pht_index;
@@ -370,19 +377,29 @@ module rv32i_fetch_unit (
 		current_prediction[32] = predict_btb_hit;
 		current_prediction[31-:32] = predict_btb_target;
 	end
-	assign can_issue_request = (!pending_valid_q || response_fire) && (!buffer_valid_q || fetch_ready_i);
-	assign imem_req_valid_o = can_issue_request;
+	assign can_issue_request = !pending_valid_q || response_fire;
+	assign imem_req_valid_o = can_issue_request && !redirect_block_q;
 	assign request_fire = imem_req_valid_o && imem_req_ready_i;
+	assign response_is_current = pending_valid_q && (imem_rsp_i[3-:rv32i_types_pkg_FETCH_EPOCH_W] == epoch_q);
+	assign imem_rsp_ready_o = !response_is_current || !skid_valid_q;
 	assign response_fire = imem_rsp_valid_i && imem_rsp_ready_o;
+	assign response_enqueue = response_fire && response_is_current;
+	assign fetch_fire = buffer_valid_q && fetch_ready_i;
 	assign request_epoch = epoch_q;
 	always @(*) begin
 		imem_req_o = 1'sb0;
 		imem_req_o[35-:32] = pc_q;
 		imem_req_o[3-:rv32i_types_pkg_FETCH_EPOCH_W] = request_epoch;
 	end
-	assign imem_rsp_ready_o = !buffer_valid_q || fetch_ready_i;
 	assign fetch_valid_o = buffer_valid_q;
 	assign fetch_payload_o = buffer_payload_q;
+	always @(*) begin
+		response_payload = 1'sb0;
+		response_payload[147-:32] = pending_pc_q;
+		response_payload[115-:32] = imem_rsp_i[36-:32];
+		response_payload[83-:83] = pending_prediction_q;
+		response_payload[0] = imem_rsp_i[4];
+	end
 	always @(*) begin
 		pc_next = pc_q;
 		if (redirect_valid_i)
@@ -399,39 +416,65 @@ module rv32i_fetch_unit (
 			pc_q <= sv2v_cast_4E913(RESET_VECTOR);
 			epoch_q <= 1'sb0;
 			pending_valid_q <= 1'b0;
+			pending_pc_q <= 1'sb0;
+			pending_pc_plus_4_q <= 1'sb0;
+			pending_prediction_q <= 1'sb0;
 			buffer_valid_q <= 1'b0;
-		end
-		else if (redirect_valid_i) begin
-			pc_q <= redirect_pc_i;
-			epoch_q <= epoch_q + {{3 {1'b0}}, 1'b1};
-			pending_valid_q <= 1'b0;
-			buffer_valid_q <= 1'b0;
+			skid_valid_q <= 1'b0;
+			redirect_block_q <= 1'b0;
 		end
 		else begin
-			pc_q <= pc_next;
-			if (fetch_ready_i)
-				buffer_valid_q <= 1'b0;
-			if (response_fire) begin
+			redirect_block_q <= redirect_valid_i;
+			if (response_fire)
 				pending_valid_q <= 1'b0;
-				if (pending_valid_q && (imem_rsp_i[3-:rv32i_types_pkg_FETCH_EPOCH_W] == epoch_q))
-					buffer_valid_q <= 1'b1;
-			end
-			if (request_fire)
+			if (request_fire) begin
 				pending_valid_q <= 1'b1;
+				pending_pc_q <= pc_q;
+				pending_pc_plus_4_q <= pc_q + 32'd4;
+				pending_prediction_q <= current_prediction;
+			end
+			if (redirect_valid_i) begin
+				pc_q <= redirect_pc_i;
+				epoch_q <= epoch_q + {{3 {1'b0}}, 1'b1};
+				buffer_valid_q <= 1'b0;
+				skid_valid_q <= 1'b0;
+			end
+			else begin
+				pc_q <= pc_next;
+				case ({fetch_fire, response_enqueue})
+					2'b00:
+						;
+					2'b01:
+						if (!buffer_valid_q)
+							buffer_valid_q <= 1'b1;
+						else if (!skid_valid_q)
+							skid_valid_q <= 1'b1;
+					2'b10:
+						if (skid_valid_q) begin
+							buffer_valid_q <= 1'b1;
+							skid_valid_q <= 1'b0;
+						end
+						else
+							buffer_valid_q <= 1'b0;
+					2'b11: begin
+						buffer_valid_q <= 1'b1;
+						skid_valid_q <= 1'b0;
+					end
+					default: begin
+						buffer_valid_q <= 1'b0;
+						skid_valid_q <= 1'b0;
+					end
+				endcase
+			end
 		end
 	always @(posedge clk_i)
-		if (request_fire) begin
-			pending_pc_q <= pc_q;
-			pending_pc_plus_4_q <= pc_q + 32'd4;
-			pending_prediction_q <= current_prediction;
-		end
+		if ((response_enqueue && buffer_valid_q) && !skid_valid_q)
+			skid_payload_q <= response_payload;
 	always @(posedge clk_i)
-		if ((response_fire && pending_valid_q) && (imem_rsp_i[3-:rv32i_types_pkg_FETCH_EPOCH_W] == epoch_q)) begin
-			buffer_payload_q[147-:32] <= pending_pc_q;
-			buffer_payload_q[115-:32] <= imem_rsp_i[36-:32];
-			buffer_payload_q[83-:83] <= pending_prediction_q;
-			buffer_payload_q[0] <= imem_rsp_i[4];
-		end
+		if (response_enqueue && (!buffer_valid_q || fetch_fire))
+			buffer_payload_q <= response_payload;
+		else if ((fetch_fire && !response_enqueue) && skid_valid_q)
+			buffer_payload_q <= skid_payload_q;
 endmodule
 module rv32i_alu_decoder (
 	opcode_i,
@@ -2139,8 +2182,9 @@ module rv32i_datapath (
 	wire branch_target_misaligned;
 	reg branch_active;
 	reg [31:0] actual_next_pc;
-	reg branch_mispredict;
+	wire ex_mem_branch_mispredict;
 	wire branch_redirect;
+	wire [31:0] branch_redirect_pc;
 	wire ex_fire;
 	wire predictor_update_valid;
 	wire [31:0] predictor_update_pc;
@@ -2234,7 +2278,7 @@ module rv32i_datapath (
 		else if (mret_redirect_valid)
 			frontend_redirect_pc = mret_redirect_pc;
 		else
-			frontend_redirect_pc = actual_next_pc;
+			frontend_redirect_pc = branch_redirect_pc;
 	end
 	rv32i_fetch_unit #(.RESET_VECTOR(RESET_VECTOR)) u_fetch_unit(
 		.clk_i(clk_i),
@@ -2513,7 +2557,6 @@ module rv32i_datapath (
 			actual_next_pc = branch_target;
 		else
 			actual_next_pc = id_ex_payload[378-:32] + 32'd4;
-		branch_mispredict = branch_active && (actual_next_pc != id_ex_payload[151-:32]);
 	end
 	localparam [4:0] rv32i_csr_pkg_EXC_INSN_ADDR_MISALIGNED = 5'd0;
 	always @(*) begin
@@ -2529,7 +2572,9 @@ module rv32i_datapath (
 		end
 	end
 	assign ex_fire = id_ex_valid && ex_mem_input_ready;
-	assign branch_redirect = (ex_fire && branch_mispredict) && !ex_exception[70];
+	assign ex_mem_branch_mispredict = (ex_mem_payload[176-:4] != 4'd0) && (ex_mem_payload[268-:32] != ex_mem_payload[151-:32]);
+	assign branch_redirect = (((ex_mem_valid && mem_stage_ready) && ex_mem_branch_mispredict) && !ex_mem_payload[70]) && !commit_redirect_valid;
+	assign branch_redirect_pc = ex_mem_payload[268-:32];
 	assign predictor_update_valid = (((ex_mem_valid && mem_stage_ready) && (ex_mem_payload[176-:4] != 4'd0)) && !ex_mem_payload[70]) && !commit_redirect_valid;
 	assign predictor_update_pc = ex_mem_payload[466-:32];
 	assign predictor_update_taken = ex_mem_payload[301];
@@ -2545,7 +2590,7 @@ module rv32i_datapath (
 		end
 		else if (predictor_update_valid) begin
 			bpu_branch_count_q <= bpu_branch_count_q + 32'd1;
-			if (ex_mem_payload[236])
+			if (ex_mem_branch_mispredict)
 				bpu_mispredict_count_q <= bpu_mispredict_count_q + 32'd1;
 			else
 				bpu_correct_count_q <= bpu_correct_count_q + 32'd1;
@@ -2569,7 +2614,7 @@ module rv32i_datapath (
 		ex_mem_payload_d[301] = branch_taken;
 		ex_mem_payload_d[300-:32] = branch_target;
 		ex_mem_payload_d[268-:32] = actual_next_pc;
-		ex_mem_payload_d[236] = branch_mispredict;
+		ex_mem_payload_d[236] = 1'b0;
 		ex_mem_payload_d[235-:12] = id_ex_payload[203-:12];
 		if (id_ex_payload[160])
 			ex_mem_payload_d[223-:32] = id_ex_payload[235-:32];
@@ -2582,7 +2627,7 @@ module rv32i_datapath (
 	rv32i_ex_mem u_ex_mem(
 		.clk_i(clk_i),
 		.rst_ni(rst_ni),
-		.flush_i(commit_redirect_valid),
+		.flush_i(frontend_redirect_valid),
 		.kill_i(1'b0),
 		.valid_i(id_ex_valid),
 		.ready_o(ex_mem_input_ready),

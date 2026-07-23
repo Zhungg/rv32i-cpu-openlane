@@ -1,0 +1,52 @@
+============================================================
+STEP 2 — RELEASE PREP SUMMARY
+============================================================
+
+Current branch:
+release/v1.0.0-prep
+
+Current HEAD:
+052b1e1 signoff: close RV32I timing at 20ns on Sky130A
+
+Modified tracked files:
+Makefile
+openlane/rv32i_core/src/rv32i_core.v
+reports/step8/step8e_openlane_qor_metrics.txt
+reports/step8/step8e_openlane_qor_summary.md
+run_openlane.sh
+scripts/test_frontend_baseline.sh
+tb/unit/tb_rv32i_fetch_unit.sv
+
+Tracked run files:
+openlane/rv32i_core/runs/.gitkeep
+openlane/rv32i_soc/runs/.gitkeep
+
+Untracked count:
+449
+
+External backup:
+/home/zhung/project_backups/rv32i_cpu_project/20260724_034805
+
+Backup files:
+branch.txt
+final_signoff/final_signoff_summary.txt
+final_signoff/final_view_inventory.txt
+final_signoff/generated_rv32i_core.v
+final_signoff/openlane_config.json
+final_signoff/step11bk_c_endpoint_mapping.txt
+final_signoff/step11bk_c_manufacturability.txt
+final_signoff/step11bk_c_path_summary.txt
+final_signoff/step11bk_c_timing_summary.txt
+git_status.txt
+head_commit.txt
+recent_commits.txt
+rv32i_repository_history.bundle
+SHA256SUMS
+staged_changes.patch
+tracked_worktree_changes.patch
+tracked_worktree_files.tar.gz
+untracked_file_list.txt
+untracked_files.tar.gz
+
+Backup size:
+103M	/home/zhung/project_backups/rv32i_cpu_project/20260724_034805

@@ -23,10 +23,10 @@ case "$DESIGN" in
 esac
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+PROJECT_ROOT="$SCRIPT_DIR"
 PDK_ROOT="${PDK_ROOT:-$HOME/.volare}"
 PDK="${PDK:-sky130A}"
-OPENLANE_IMAGE="${OPENLANE_IMAGE:-ghcr.io/efabless/openlane2:2.3.10}"
+OPENLANE_IMAGE="${OPENLANE_IMAGE:-ghcr.io/efabless/openlane2:3.0.0.dev21}"
 DESIGN_DIR="$PROJECT_ROOT/openlane/$DESIGN"
 CONFIG_FILE="$DESIGN_DIR/config.json"
 
