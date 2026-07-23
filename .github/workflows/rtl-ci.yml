@@ -1,0 +1,262 @@
+name: RV32I RTL CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rv32i-rtl-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  repository-audit:
+    name: Repository Audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Show revision
+        run: |
+          git rev-parse HEAD
+          git status --short
+
+      - name: Check repository structure
+        run: make check-structure
+
+      - name: Verify release source manifest
+        run: sha256sum -c reports/signoff/source_manifest.sha256
+
+      - name: Check whitespace
+        run: git diff --check
+
+      - name: Audit tracked artifacts
+        shell: bash
+        run: |
+          bad_files="$(
+            git ls-files |
+            grep -E \
+              '(^openlane/.*/runs/[^.]|^reports/step11/|^reports/run_snapshots/|^reports/maintenance/|(^|/)out\.def$|\.tar\.gz$|\.before|\.stale|config\.step|\.vcd$|\.fst$)' \
+            || true
+          )"
+
+          if [[ -n "$bad_files" ]]; then
+            echo "ERROR: Unwanted tracked artifacts detected:"
+            echo "$bad_files"
+            exit 1
+          fi
+
+          echo "Tracked-artifact audit: PASS"
+
+  frontend-regression:
+    name: Frontend RTL Regression
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install simulators
+        run: |
+          sudo apt-get update
+          sudo apt-get install \
+            --yes \
+            --no-install-recommends \
+            iverilog \
+            verilator
+
+      - name: Report tool versions
+        run: |
+          iverilog -V
+          verilator --version
+
+      - name: Run frontend baseline
+        run: make test-frontend-baseline
+
+      - name: Upload frontend reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-regression-reports
+          path: |
+            reports/lint/frontend_baseline_verilator.log
+            reports/lint/frontend_baseline_iverilog.log
+            reports/rtl_sim/frontend_baseline.log
+          if-no-files-found: ignore
+          retention-days: 14
+
+  synthesis-readiness:
+    name: RTL Generation and Yosys Readiness
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    env:
+      SV2V_VERSION: v0.0.13
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install synthesis dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install \
+            --yes \
+            --no-install-recommends \
+            curl \
+            unzip \
+            yosys
+
+      - name: Install sv2v release binary
+        shell: bash
+        run: |
+          release_json="$(
+            curl \
+              --fail \
+              --silent \
+              --show-error \
+              --location \
+              "https://api.github.com/repos/zachjs/sv2v/releases/tags/${SV2V_VERSION}"
+          )"
+
+          asset_url="$(
+            RELEASE_JSON="$release_json" python3 - <<'PY'
+          import json
+          import os
+          import sys
+
+          release = json.loads(os.environ["RELEASE_JSON"])
+
+          matches = [
+              asset["browser_download_url"]
+              for asset in release.get("assets", [])
+              if "linux" in asset["name"].lower()
+              and asset["name"].lower().endswith(".zip")
+          ]
+
+          if len(matches) != 1:
+              names = [
+                  asset.get("name", "<unnamed>")
+                  for asset in release.get("assets", [])
+              ]
+              print(
+                  "ERROR: Could not uniquely identify Linux sv2v asset. "
+                  f"Available assets: {names}",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+
+          print(matches[0])
+          PY
+          )"
+
+          echo "Downloading: $asset_url"
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --location \
+            "$asset_url" \
+            --output /tmp/sv2v-linux.zip
+
+          rm -rf /tmp/sv2v-release
+          mkdir -p /tmp/sv2v-release
+
+          unzip -q \
+            /tmp/sv2v-linux.zip \
+            -d /tmp/sv2v-release
+
+          sv2v_binary="$(
+            find /tmp/sv2v-release \
+              -type f \
+              -name sv2v \
+              -print \
+              -quit
+          )"
+
+          if [[ -z "$sv2v_binary" ]]; then
+            echo "ERROR: sv2v executable not found in release archive."
+            find /tmp/sv2v-release -maxdepth 3 -type f -print
+            exit 1
+          fi
+
+          sudo install \
+            -m 0755 \
+            "$sv2v_binary" \
+            /usr/local/bin/sv2v
+
+      - name: Report tool versions
+        run: |
+          sv2v --version
+          yosys -V
+
+      - name: Capture expected generated RTL hash
+        shell: bash
+        run: |
+          expected_hash="$(
+            awk '{print $1}' \
+              reports/github_release_audit/step3/generated_rtl_after.sha256
+          )"
+
+          current_hash="$(
+            sha256sum openlane/rv32i_core/src/rv32i_core.v |
+            awk '{print $1}'
+          )"
+
+          echo "EXPECTED_RTL_HASH=$expected_hash" >> "$GITHUB_ENV"
+          echo "CURRENT_RTL_HASH=$current_hash" >> "$GITHUB_ENV"
+
+          echo "Expected hash: $expected_hash"
+          echo "Current hash : $current_hash"
+
+          test "$expected_hash" = "$current_hash"
+
+      - name: Regenerate OpenLane RTL
+        run: make generate-openlane-rtl
+
+      - name: Verify generated RTL reproducibility
+        shell: bash
+        run: |
+          regenerated_hash="$(
+            sha256sum openlane/rv32i_core/src/rv32i_core.v |
+            awk '{print $1}'
+          )"
+
+          echo "Expected    : $EXPECTED_RTL_HASH"
+          echo "Before      : $CURRENT_RTL_HASH"
+          echo "Regenerated : $regenerated_hash"
+
+          test "$EXPECTED_RTL_HASH" = "$CURRENT_RTL_HASH"
+          test "$EXPECTED_RTL_HASH" = "$regenerated_hash"
+
+          git diff --exit-code -- \
+            openlane/rv32i_core/src/rv32i_core.v
+
+          echo "Generated RTL reproducibility: PASS"
+
+      - name: Run Yosys synthesis-readiness check
+        run: make check-yosys-synthesis-readiness
+
+      - name: Upload synthesis reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: synthesis-readiness-reports
+          path: |
+            reports/yosys/check_synthesis_readiness_sv2v.log
+            logs/yosys/check_synthesis_readiness_sv2v.log
+            build/yosys/rv32i_core.generic.v
+          if-no-files-found: ignore
+          retention-days: 14
