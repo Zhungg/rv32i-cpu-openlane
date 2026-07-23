@@ -1,100 +1,336 @@
-# RV32I CPU — RTL to GDSII
+# RV32I CPU — Sky130A RTL-to-GDSII
 
-Dự án xây dựng CPU RISC-V 32-bit theo RV32I, kiến trúc pipeline 5 stage, hướng đến flow hoàn chỉnh:
+![Release](https://img.shields.io/badge/release-v1.0.0-blue)
+![ISA](https://img.shields.io/badge/ISA-RV32I-success)
+![Pipeline](https://img.shields.io/badge/microarchitecture-5--stage%20pipeline-informational)
+![PDK](https://img.shields.io/badge/PDK-Sky130A-orange)
+![Flow](https://img.shields.io/badge/flow-OpenLane%202-blueviolet)
+![Timing](https://img.shields.io/badge/MCMM%20timing-closed-success)
+![DRC](https://img.shields.io/badge/DRC-PASS-success)
+![LVS](https://img.shields.io/badge/LVS-PASS-success)
 
-`Specification → RTL → Verification → Synthesis → STA → OpenLane 2 → Signoff → GDSII`
+A modular five-stage, in-order RISC-V RV32I CPU implemented in SystemVerilog and taken through an open-source Sky130A RTL-to-GDSII flow using OpenLane 2.
 
-## Trạng thái dự án
-
-| Bước | Nội dung | Trạng thái |
-|---:|---|---|
-| 1 | Repository audit và baseline selection | PASS |
-| 1A | Repository skeleton/OpenLane runs verification | PASS |
-| 2 | Architectural Specification | **PASS — v0.1** |
-| 3 | Instruction Behavior Specification | **PASS — v0.1** |
-| 4 | Microarchitecture Specification | **PASS — v0.1** |
-| 5+ | Pipeline contracts, RTL, verification và RTL-to-GDSII | Chưa bắt đầu |
-
-Architectural target hiện tại:
+The project covers:
 
 ```text
-RV32I_Zicntr_Zicsr_Zifencei
-+ Machine-mode-only privileged support
-+ precise trap/interrupt
-+ 5-stage in-order pipeline
-+ dynamic branch prediction
-+ ready/valid memory interfaces
-+ RVFI-style retirement trace
+Specification
+→ RTL design
+→ Unit and integration verification
+→ SystemVerilog-to-Verilog conversion
+→ Yosys synthesis readiness
+→ OpenLane 2 physical implementation
+→ MCMM static timing analysis
+→ DRC, LVS, and antenna verification
+→ Reproducible engineering release
 ```
 
-## Top-level dự kiến
+## Release Status
 
-- `rv32i_core`: CPU core, sử dụng instruction/data memory interface.
-- `rv32i_soc`: wrapper tích hợp core, memory subsystem và các khối hệ thống cần thiết.
+The current engineering release is **v1.0.0**.
 
-## Quy ước chính
+| Item                           |   Result |
+| ------------------------------ | -------: |
+| RTL implementation             | Complete |
+| Frontend and core verification |     PASS |
+| Generated RTL reproducibility  |     PASS |
+| Yosys synthesis readiness      |     PASS |
+| OpenLane 2 RTL-to-GDSII flow   | Complete |
+| MCMM setup timing              |      MET |
+| MCMM hold timing               |      MET |
+| Antenna verification           |     PASS |
+| LVS                            |     PASS |
+| DRC                            |     PASS |
+| Independent clean-clone audit  |     PASS |
 
-- RTL synthesizable đặt trong `rtl/`.
-- Testbench và model chỉ dành cho verification đặt trong `tb/`.
-- Phần mềm thử nghiệm đặt trong `sw/` và `tb/programs/`.
-- Mọi thay đổi kiến trúc phải được cập nhật trong `docs/spec/` trước khi sửa RTL.
-- Không commit waveform, build tạm hoặc toàn bộ output OpenLane trong `runs/`.
+## Design Overview
 
-## Quy ước OpenLane 2
+The design is organized as a modular five-stage CPU pipeline:
 
-Mỗi design OpenLane có một **design directory** riêng chứa `config.json`:
+```mermaid
+flowchart LR
+    IMEM[Instruction Memory Interface]
+    FETCH["IF<br/>PC, Fetch Control, BPU"]
+    IFID["IF/ID<br/>Pipeline Register"]
+    DECODE["ID<br/>Decoder, Register File, CSR"]
+    IDEX["ID/EX<br/>Pipeline Register"]
+    EXECUTE["EX<br/>ALU, Branch Compare, Target Generation"]
+    EXMEM["EX/MEM<br/>Pipeline Register"]
+    MEMORY["MEM<br/>LSU and Data Interface"]
+    MEMWB["MEM/WB<br/>Pipeline Register"]
+    COMMIT["WB / Commit<br/>Retirement and Register Writeback"]
+    DMEM[Data Memory Interface]
+    CONTROL["Hazard, Forwarding,<br/>Stall, Flush, and Kill"]
+    TRAP["Trap, Exception,<br/>Interrupt, and Redirect"]
+
+    IMEM --> FETCH
+    FETCH --> IFID
+    IFID --> DECODE
+    DECODE --> IDEX
+    IDEX --> EXECUTE
+    EXECUTE --> EXMEM
+    EXMEM --> MEMORY
+    MEMORY --> MEMWB
+    MEMWB --> COMMIT
+    MEMORY <--> DMEM
+
+    CONTROL -. controls .-> FETCH
+    CONTROL -. controls .-> DECODE
+    CONTROL -. forwarding .-> EXECUTE
+    TRAP -. redirect .-> FETCH
+    EXECUTE -. branch redirect .-> FETCH
+```
+
+### Main RTL Areas
+
+* **Frontend:** program counter, instruction fetch, branch prediction infrastructure, BTB, PHT, and global history.
+* **Decode:** instruction decoder, immediate generation, and register file.
+* **Execute:** ALU, branch comparison, and branch-target generation.
+* **Memory:** load/store unit, alignment handling, memory transactions, and fence control.
+* **Pipeline:** IF/ID, ID/EX, EX/MEM, and MEM/WB pipeline registers.
+* **Control:** hazards, data forwarding, stalls, flushes, and pipeline kills.
+* **Commit:** writeback and architectural retirement.
+* **Trap infrastructure:** CSR, exception, interrupt, trap entry, and return handling.
+* **SoC infrastructure:** memory wrappers and address decoding.
+
+## Physical-Design Signoff
+
+The v1.0.0 release is based on the following signoff run:
+
+| Metric               |                    Result |
+| -------------------- | ------------------------: |
+| Design               |              `rv32i_core` |
+| PDK                  |                   Sky130A |
+| Physical-design flow |                OpenLane 2 |
+| Clock port           |                   `clk_i` |
+| Clock period         |               `20.000 ns` |
+| Target frequency     |                  `50 MHz` |
+| Final run            | `RUN_2026-07-23_18-56-04` |
+| Worst setup WNS      |            `+0.252381 ns` |
+| Worst setup corner   |        `max_ss_100C_1v60` |
+| Worst hold WNS       |            `+0.254094 ns` |
+| Worst hold corner    |        `min_ff_n40C_1v95` |
+| Setup status         |                       MET |
+| Hold status          |                       MET |
+| Antenna              |                      PASS |
+| LVS                  |                      PASS |
+| DRC                  |                      PASS |
+
+Selected signoff evidence is available in:
 
 ```text
-openlane/
-├── rv32i_core/
-│   ├── config.json          # Sẽ tạo sau khi chốt top-level/constraint
-│   ├── pin_order.cfg        # Sẽ tạo khi làm floorplan
-│   └── runs/
-│       └── RUN_<timestamp>/ # OpenLane 2 tự động sinh
-└── rv32i_soc/
-    ├── config.json
-    ├── pin_order.cfg
-    └── runs/
-        └── RUN_<timestamp>/
+reports/signoff/
 ```
 
-OpenLane 2 đặt output tại `runs/<run_tag>` bên dưới thư mục chứa config. Mỗi run chứa các thư mục theo từng step, `final/`, `tmp/`, log và `resolved.json`.
+The raw OpenLane run directory is intentionally excluded from Git because it contains large generated and intermediate artifacts.
 
-- `openlane/<design>/runs/`: output gốc, có thể rất lớn, bị Git ignore.
-- `reports/openlane/`: chỉ lưu các báo cáo/QoR summary được chọn lọc để commit.
-- `deliverables/`: chỉ chứa artifact cuối đã kiểm tra như GDS, DEF, LEF, netlist, SDF, SPEF.
+## Repository Structure
 
-### Chạy bằng Docker image OpenLane 2
+```text
+rv32i-cpu-openlane/
+├── config/                     # RTL file lists and shared configuration
+├── docs/                       # Architecture and microarchitecture documents
+├── rtl/
+│   ├── pkg/                    # Types, constants, and shared packages
+│   ├── core/                   # Core top level and datapath integration
+│   ├── frontend/               # Fetch and branch-prediction logic
+│   ├── decode/                 # Decoder and register file
+│   ├── execute/                # ALU and branch execution
+│   ├── memory/                 # LSU and memory-interface logic
+│   ├── pipeline/               # Pipeline registers
+│   ├── control/                # Hazard and forwarding control
+│   ├── commit/                 # Writeback and retirement
+│   ├── trap/                   # CSR, exception, and interrupt logic
+│   └── soc/                    # SoC wrapper and memory subsystem
+├── tb/
+│   ├── common/                 # Shared verification utilities
+│   ├── unit/                   # Unit-level self-checking testbenches
+│   ├── core/                   # Core-level verification
+│   ├── memory_models/          # Behavioral memory models
+│   └── programs/               # Assembly and test programs
+├── scripts/                    # Build, verification, and flow automation
+├── synth/yosys/                # Standalone synthesis support
+├── sta/opensta/                # Standalone STA support
+├── openlane/
+│   ├── rv32i_core/             # OpenLane configuration for the CPU core
+│   └── rv32i_soc/              # OpenLane directory for the SoC wrapper
+├── reports/
+│   ├── signoff/                # Final selected signoff reports
+│   └── github_release_audit/   # Release and reproducibility evidence
+└── Makefile                    # Main project entry points
+```
 
-Sau khi có `config.json`:
+More information is available in [`PROJECT_STRUCTURE.md`](PROJECT_STRUCTURE.md).
+
+## Verification
+
+The project provides unit-level and integration-level regression targets for the CPU datapath and control subsystems.
+
+Representative targets include:
 
 ```bash
-source scripts/env.sh
-./scripts/run_openlane.sh rv32i_core
+make test-leaf-datapath
+make test-decoder
+make test-execute-support
+make test-pipeline-registers
+make test-frontend-baseline
+make test-baseline-core
+make test-lsu-core
+make test-load-use-hazard
+make test-forwarding-core
+make test-basic-trap
+make test-csr-instructions
+make test-bpu-fetch-integration
+make test-step7-regression
 ```
 
-Hoặc:
+Check the complete target list with:
 
 ```bash
-./scripts/run_openlane.sh rv32i_soc
+make help
 ```
 
-Script mount project và `$PDK_ROOT`, chạy image `ghcr.io/efabless/openlane2:2.3.10`, đồng thời đặt working directory đúng tại design directory nên run sẽ xuất hiện ở:
+or inspect the project `Makefile`.
+
+## Reproducing the Release Checks
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Zhungg/rv32i-cpu-openlane.git
+cd rv32i-cpu-openlane
+git checkout v1.0.0
+```
+
+### 2. Verify the project structure
+
+```bash
+make check-structure
+```
+
+### 3. Verify the release source manifest
+
+```bash
+sha256sum -c reports/signoff/source_manifest.sha256
+```
+
+### 4. Regenerate the flattened OpenLane RTL
+
+The generation flow requires `sv2v`:
+
+```bash
+make generate-openlane-rtl
+```
+
+The regenerated file is:
+
+```text
+openlane/rv32i_core/src/rv32i_core.v
+```
+
+### 5. Run the frontend baseline
+
+```bash
+make test-frontend-baseline
+```
+
+### 6. Check Yosys synthesis readiness
+
+This step requires both `sv2v` and Yosys:
+
+```bash
+make check-yosys-synthesis-readiness
+```
+
+## Running OpenLane 2
+
+### Requirements
+
+* Docker
+* OpenLane 2 image
+* Sky130A PDK installed through Volare
+* `PDK_ROOT` pointing to the local PDK installation
+
+The project defaults are:
+
+```text
+OpenLane image: ghcr.io/efabless/openlane2:2.3.10
+PDK:            sky130A
+PDK_ROOT:       $HOME/.volare
+```
+
+Generate the OpenLane-compatible RTL:
+
+```bash
+make generate-openlane-rtl
+```
+
+Run the core implementation:
+
+```bash
+export PDK_ROOT="$HOME/.volare"
+export PDK="sky130A"
+
+make openlane-core
+```
+
+OpenLane-generated runs are written under:
 
 ```text
 openlane/rv32i_core/runs/RUN_<timestamp>/
 ```
 
-Xem `PROJECT_STRUCTURE.md` để biết vai trò từng thư mục.
+These run directories are intentionally ignored by Git.
 
-## Project progress
+## Signoff and Release Evidence
 
-| Step | Deliverable | Status |
-|---:|---|---|
-| 01 | Repository audit | PASS |
-| 01A | Repository skeleton | PASS |
-| 02 | Architectural Specification | PASS |
-| 03 | Instruction Behavior Specification | PASS |
-| 04 | Microarchitecture Specification | PASS |
-| 05 | Pipeline Contract | NEXT |
+Important release files include:
+
+* [`reports/signoff/final_signoff_summary.txt`](reports/signoff/final_signoff_summary.txt)
+* [`reports/signoff/mcmm_timing_summary.txt`](reports/signoff/mcmm_timing_summary.txt)
+* [`reports/signoff/manufacturability.rpt`](reports/signoff/manufacturability.rpt)
+* [`reports/signoff/worst_setup_path_summary.txt`](reports/signoff/worst_setup_path_summary.txt)
+* [`reports/signoff/source_manifest.sha256`](reports/signoff/source_manifest.sha256)
+* [`reports/github_release_audit/step4/clean_clone_audit_summary.txt`](reports/github_release_audit/step4/clean_clone_audit_summary.txt)
+
+## Engineering Release
+
+The v1.0.0 release was prepared using the following workflow:
+
+```text
+Source audit
+→ controlled release branch
+→ generated RTL reproducibility check
+→ tracked-artifact audit
+→ independent clean clone
+→ pull-request review
+→ squash merge
+→ annotated Git tag
+→ GitHub Release
+→ tagged-release verification
+```
+
+Release tag:
+
+```text
+v1.0.0
+```
+
+Release commit:
+
+```text
+0159bac669248c784cd492941cd068c4a258517b
+```
+
+## Scope and Limitations
+
+This repository is an educational and engineering portfolio project focused on digital IC design, verification, and ASIC Physical Design methodology.
+
+The reported signoff status refers to the open-source Sky130A/OpenLane 2 implementation flow. It does not represent fabricated-silicon validation or production qualification.
+
+## Author
+
+**Nguyễn Việt Hùng**
+
+Electronics and Telecommunications student pursuing ASIC Physical Design and Digital IC Design.
 
