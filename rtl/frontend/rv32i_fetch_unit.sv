@@ -50,7 +50,10 @@ module rv32i_fetch_unit #(
 
     logic               request_fire;
     logic               response_fire;
+    logic               fetch_fire;
     logic               can_issue_request;
+    logic               response_is_current;
+    logic               response_enqueue;
 
     logic [FETCH_EPOCH_W-1:0] epoch_q;
     logic [FETCH_EPOCH_W-1:0] request_epoch;
@@ -60,8 +63,18 @@ module rv32i_fetch_unit #(
     addr_t              pending_pc_plus_4_q;
     prediction_meta_t   pending_prediction_q;
 
+    // STEP 11BF-B: Two-entry fetch FIFO.
+    //
+    // buffer_* is the FIFO head presented to IF/ID.
+    // skid_* is the second entry used to absorb a response while the
+    // head is stalled by downstream pipeline backpressure.
     logic               buffer_valid_q;
     if_id_payload_t     buffer_payload_q;
+
+    logic               skid_valid_q;
+    if_id_payload_t     skid_payload_q;
+
+    if_id_payload_t     response_payload;
 
     logic               predict_taken;
     addr_t              predict_pc;
@@ -108,20 +121,50 @@ module rv32i_fetch_unit #(
         current_prediction.btb_target      = predict_btb_target;
     end
 
+    // STEP 11BF-B: Two-entry fetch FIFO control.
+    //
+    // A new request may be launched when no request is outstanding or
+    // when the previous response is accepted in the same cycle.
+    //
+    // This equation intentionally contains no fetch_ready_i term.
     assign can_issue_request =
-        (!pending_valid_q || response_fire) &&
-        (!buffer_valid_q || fetch_ready_i);
+        !pending_valid_q ||
+        response_fire;
 
+    // Do not launch an old-path request during a redirect cycle.
     assign imem_req_valid_o =
-        can_issue_request;
+        can_issue_request &&
+        !redirect_valid_i;
 
     assign request_fire =
         imem_req_valid_o &&
         imem_req_ready_i;
 
+    // A response belongs to the current speculative stream only when
+    // both the tracked request and response epoch match the active epoch.
+    assign response_is_current =
+        pending_valid_q &&
+        (imem_rsp_i.epoch == epoch_q);
+
+    // Current responses need one available FIFO position. Since the FIFO
+    // has two entries, skid_valid_q indicates whether it is full.
+    //
+    // Stale or unsolicited responses are always accepted and discarded.
+    assign imem_rsp_ready_o =
+        !response_is_current ||
+        !skid_valid_q;
+
     assign response_fire =
         imem_rsp_valid_i &&
         imem_rsp_ready_o;
+
+    assign response_enqueue =
+        response_fire &&
+        response_is_current;
+
+    assign fetch_fire =
+        buffer_valid_q &&
+        fetch_ready_i;
 
     assign request_epoch =
         epoch_q;
@@ -132,15 +175,20 @@ module rv32i_fetch_unit #(
         imem_req_o.epoch   = request_epoch;
     end
 
-    assign imem_rsp_ready_o =
-        !buffer_valid_q ||
-        fetch_ready_i;
-
     assign fetch_valid_o =
         buffer_valid_q;
 
     assign fetch_payload_o =
         buffer_payload_q;
+
+    always @* begin
+        response_payload = '0;
+
+        response_payload.pc          = pending_pc_q;
+        response_payload.instruction = imem_rsp_i.instruction;
+        response_payload.prediction  = pending_prediction_q;
+        response_payload.fetch_error = imem_rsp_i.error;
+    end
 
     always @* begin
         pc_next = pc_q;
@@ -155,55 +203,109 @@ module rv32i_fetch_unit #(
 
     always_ff @(posedge clk_i or negedge rst_ni) begin
         if (!rst_ni) begin
-            pc_q              <= addr_t'(RESET_VECTOR);
-            epoch_q           <= '0;
+            pc_q                 <= addr_t'(RESET_VECTOR);
+            epoch_q              <= '0;
 
-            pending_valid_q   <= 1'b0;
-            pending_pc_q      <= '0;
-            pending_pc_plus_4_q <= '0;
+            pending_valid_q      <= 1'b0;
+            pending_pc_q         <= '0;
+            pending_pc_plus_4_q  <= '0;
             pending_prediction_q <= '0;
 
-            buffer_valid_q    <= 1'b0;
-            buffer_payload_q  <= '0;
+            buffer_valid_q       <= 1'b0;
+            buffer_payload_q     <= '0;
+
+            skid_valid_q         <= 1'b0;
+            skid_payload_q       <= '0;
         end
         else begin
-            if (redirect_valid_i) begin
-                pc_q            <= redirect_pc_i;
-                epoch_q         <= epoch_q + {{(FETCH_EPOCH_W-1){1'b0}}, 1'b1};
-
+            // ----------------------------------------------------------
+            // Outstanding request lifetime
+            // ----------------------------------------------------------
+            //
+            // Redirect does not clear pending_valid_q. A request already
+            // accepted by the external interface remains outstanding
+            // until its response is consumed. Epoch comparison then
+            // discards that response as stale.
+            if (response_fire) begin
                 pending_valid_q <= 1'b0;
-                buffer_valid_q  <= 1'b0;
+            end
+
+            // Same-cycle response/request turnover leaves exactly one
+            // newly outstanding request.
+            if (request_fire) begin
+                pending_valid_q      <= 1'b1;
+                pending_pc_q         <= pc_q;
+                pending_pc_plus_4_q  <= pc_q + 32'd4;
+                pending_prediction_q <= current_prediction;
+            end
+
+            // ----------------------------------------------------------
+            // Redirect and fetch PC
+            // ----------------------------------------------------------
+            if (redirect_valid_i) begin
+                pc_q    <= redirect_pc_i;
+                epoch_q <=
+                    epoch_q +
+                    {{(FETCH_EPOCH_W-1){1'b0}}, 1'b1};
+
+                // All buffered instructions belong to the old path.
+                buffer_valid_q <= 1'b0;
+                skid_valid_q   <= 1'b0;
             end
             else begin
                 pc_q <= pc_next;
 
-                if (fetch_ready_i) begin
-                    buffer_valid_q <= 1'b0;
-                end
-
-                if (response_fire) begin
-                    pending_valid_q <= 1'b0;
-
-                    if (
-                        pending_valid_q &&
-                        (imem_rsp_i.epoch == epoch_q)
-                    ) begin
-                        buffer_valid_q <= 1'b1;
-
-                        buffer_payload_q                 <= '0;
-                        buffer_payload_q.pc              <= pending_pc_q;
-                        buffer_payload_q.instruction     <= imem_rsp_i.instruction;
-                        buffer_payload_q.prediction      <= pending_prediction_q;
-                        buffer_payload_q.fetch_error     <= imem_rsp_i.error;
+                // ------------------------------------------------------
+                // Two-entry FIFO transition
+                // ------------------------------------------------------
+                case ({
+                    fetch_fire,
+                    response_enqueue
+                })
+                    2'b00: begin
+                        // Hold both entries.
                     end
-                end
 
-                if (request_fire) begin
-                    pending_valid_q      <= 1'b1;
-                    pending_pc_q         <= pc_q;
-                    pending_pc_plus_4_q  <= pc_q + 32'd4;
-                    pending_prediction_q <= current_prediction;
-                end
+                    2'b01: begin
+                        // Enqueue without dequeue.
+                        if (!buffer_valid_q) begin
+                            buffer_valid_q   <= 1'b1;
+                            buffer_payload_q <= response_payload;
+                        end
+                        else if (!skid_valid_q) begin
+                            skid_valid_q   <= 1'b1;
+                            skid_payload_q <= response_payload;
+                        end
+                    end
+
+                    2'b10: begin
+                        // Dequeue without enqueue.
+                        if (skid_valid_q) begin
+                            buffer_valid_q   <= 1'b1;
+                            buffer_payload_q <= skid_payload_q;
+                            skid_valid_q     <= 1'b0;
+                        end
+                        else begin
+                            buffer_valid_q <= 1'b0;
+                        end
+                    end
+
+                    2'b11: begin
+                        // Current head is consumed while a new response
+                        // arrives. The response directly replaces head.
+                        //
+                        // response_enqueue cannot be high while skid is
+                        // valid because imem_rsp_ready_o is then low.
+                        buffer_valid_q   <= 1'b1;
+                        buffer_payload_q <= response_payload;
+                        skid_valid_q     <= 1'b0;
+                    end
+
+                    default: begin
+                        buffer_valid_q <= 1'b0;
+                        skid_valid_q   <= 1'b0;
+                    end
+                endcase
             end
         end
     end
