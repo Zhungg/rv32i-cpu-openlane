@@ -139,6 +139,7 @@ module rv32i_datapath #(
     addr_t          actual_next_pc;
     logic           branch_mispredict;
     logic           branch_redirect;
+    addr_t          branch_redirect_pc;
     logic           ex_fire;
 
     logic           predictor_update_valid;
@@ -311,7 +312,7 @@ module rv32i_datapath #(
             frontend_redirect_pc = mret_redirect_pc;
         end
         else begin
-            frontend_redirect_pc = actual_next_pc;
+            frontend_redirect_pc = branch_redirect_pc;
         end
     end
 
@@ -847,10 +848,24 @@ module rv32i_datapath #(
         id_ex_valid &&
         ex_mem_input_ready;
 
+    // STEP 11BJ-B: Registered EX/MEM branch redirect.
+    //
+    // The previous redirect originated from the combinational EX result.
+    // A WB forwarding comparison could therefore propagate through branch
+    // resolution and directly into the fetch PC register.
+    //
+    // EX already captures actual_next_pc, branch_mispredict and exception
+    // metadata in EX/MEM. Resolve the redirect when that registered
+    // transaction advances through MEM.
     assign branch_redirect =
-        ex_fire &&
-        branch_mispredict &&
-        !ex_exception.valid;
+        ex_mem_valid &&
+        mem_stage_ready &&
+        ex_mem_payload.branch_mispredict &&
+        !ex_mem_payload.exception.valid &&
+        !commit_redirect_valid;
+
+    assign branch_redirect_pc =
+        ex_mem_payload.actual_next_pc;
 
 
     // STEP 11AR: Train the branch predictor from registered EX/MEM state.
@@ -962,7 +977,7 @@ module rv32i_datapath #(
         .clk_i     (clk_i),
         .rst_ni    (rst_ni),
 
-        .flush_i   (commit_redirect_valid),
+        .flush_i   (frontend_redirect_valid),
         .kill_i    (1'b0),
 
         .valid_i   (id_ex_valid),
