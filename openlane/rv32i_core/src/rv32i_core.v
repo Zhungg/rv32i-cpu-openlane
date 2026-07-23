@@ -399,9 +399,6 @@ module rv32i_fetch_unit (
 			pc_q <= sv2v_cast_4E913(RESET_VECTOR);
 			epoch_q <= 1'sb0;
 			pending_valid_q <= 1'b0;
-			pending_pc_q <= 1'sb0;
-			pending_pc_plus_4_q <= 1'sb0;
-			pending_prediction_q <= 1'sb0;
 			buffer_valid_q <= 1'b0;
 		end
 		else if (redirect_valid_i) begin
@@ -419,12 +416,14 @@ module rv32i_fetch_unit (
 				if (pending_valid_q && (imem_rsp_i[3-:rv32i_types_pkg_FETCH_EPOCH_W] == epoch_q))
 					buffer_valid_q <= 1'b1;
 			end
-			if (request_fire) begin
+			if (request_fire)
 				pending_valid_q <= 1'b1;
-				pending_pc_q <= pc_q;
-				pending_pc_plus_4_q <= pc_q + 32'd4;
-				pending_prediction_q <= current_prediction;
-			end
+		end
+	always @(posedge clk_i)
+		if (request_fire) begin
+			pending_pc_q <= pc_q;
+			pending_pc_plus_4_q <= pc_q + 32'd4;
+			pending_prediction_q <= current_prediction;
 		end
 	always @(posedge clk_i)
 		if ((response_fire && pending_valid_q) && (imem_rsp_i[3-:rv32i_types_pkg_FETCH_EPOCH_W] == epoch_q)) begin
@@ -2008,12 +2007,12 @@ module rv32i_mem_wb (
 	input wire kill_i;
 	input wire valid_i;
 	output reg ready_o;
-	input wire [381:0] payload_i;
+	input wire [413:0] payload_i;
 	output wire valid_o;
 	input wire ready_i;
-	output wire [381:0] payload_o;
+	output wire [413:0] payload_o;
 	reg valid_q;
-	reg [381:0] payload_q;
+	reg [413:0] payload_q;
 	always @(*) begin
 		if (_sv2v_0)
 			;
@@ -2113,6 +2112,17 @@ module rv32i_datapath (
 	reg [378:0] id_ex_payload_d;
 	reg id_instruction_supported;
 	wire id_load_use_stall;
+	reg id_serialization_stall;
+	wire serialization_pipeline_empty;
+	wire serializing_id_detected;
+	wire serializing_issue_fire;
+	wire serializing_retire;
+	localparam [1:0] SERIAL_NORMAL = 2'b00;
+	localparam [1:0] SERIAL_DRAIN = 2'b01;
+	localparam [1:0] SERIAL_ISSUE = 2'b10;
+	localparam [1:0] SERIAL_BLOCK = 2'b11;
+	reg [1:0] serialization_state_q;
+	reg [1:0] serialization_state_d;
 	wire id_ex_input_ready;
 	wire id_ex_valid;
 	wire [378:0] id_ex_payload;
@@ -2159,18 +2169,18 @@ module rv32i_datapath (
 	wire csr_write_illegal;
 	reg [31:0] ex_csr_write_operand;
 	wire csr_commit_write_valid;
-	reg frontend_redirect_valid;
+	wire frontend_redirect_valid;
 	reg [31:0] frontend_redirect_pc;
 	reg [70:0] ex_exception;
 	reg [466:0] ex_mem_payload_d;
 	wire ex_mem_valid;
 	wire ex_mem_input_ready;
 	wire [466:0] ex_mem_payload;
-	reg [381:0] mem_wb_payload_d;
+	reg [413:0] mem_wb_payload_d;
 	wire mem_wb_valid;
 	wire mem_wb_input_ready;
-	wire [381:0] mem_wb_payload;
-	reg [31:0] writeback_data;
+	wire [413:0] mem_wb_payload;
+	wire [31:0] writeback_data;
 	wire register_write_enable;
 	wire mem_stage_is_memory;
 	wire mem_stage_lsu_valid;
@@ -2195,7 +2205,7 @@ module rv32i_datapath (
 		.csr_read_illegal_o(csr_read_illegal),
 		.csr_write_valid_i(csr_commit_write_valid),
 		.csr_write_address_i(mem_wb_payload[152-:12]),
-		.csr_write_funct3_i(mem_wb_payload[332:330]),
+		.csr_write_funct3_i(mem_wb_payload[364:362]),
 		.csr_write_data_i(mem_wb_payload[140-:32]),
 		.csr_write_illegal_o(csr_write_illegal),
 		.mtvec_o(csr_mtvec),
@@ -2215,21 +2225,16 @@ module rv32i_datapath (
 		.trap_redirect_pc_o(trap_redirect_pc)
 	);
 	assign commit_redirect_valid = trap_redirect_valid || mret_redirect_valid;
+	assign frontend_redirect_valid = commit_redirect_valid || branch_redirect;
 	always @(*) begin
-		frontend_redirect_valid = 1'b0;
-		frontend_redirect_pc = 1'sb0;
-		if (trap_redirect_valid) begin
-			frontend_redirect_valid = 1'b1;
+		if (_sv2v_0)
+			;
+		if (trap_redirect_valid)
 			frontend_redirect_pc = trap_redirect_pc;
-		end
-		else if (mret_redirect_valid) begin
-			frontend_redirect_valid = 1'b1;
+		else if (mret_redirect_valid)
 			frontend_redirect_pc = mret_redirect_pc;
-		end
-		else if (branch_redirect) begin
-			frontend_redirect_valid = 1'b1;
+		else
 			frontend_redirect_pc = actual_next_pc;
-		end
 	end
 	rv32i_fetch_unit #(.RESET_VECTOR(RESET_VECTOR)) u_fetch_unit(
 		.clk_i(clk_i),
@@ -2294,21 +2299,57 @@ module rv32i_datapath (
 		.mem_memory_write_i(ex_mem_payload[168]),
 		.load_use_stall_o(id_load_use_stall)
 	);
+	assign serialization_pipeline_empty = (!id_ex_valid && !ex_mem_valid) && !mem_wb_valid;
+	assign serializing_id_detected = (if_id_valid && id_instruction_supported) && decoded_control[1];
+	assign serializing_issue_fire = (((serialization_state_q == SERIAL_ISSUE) && serializing_id_detected) && id_ex_input_ready) && !id_load_use_stall;
+	assign serializing_retire = mem_wb_valid && mem_wb_payload[72];
 	always @(*) begin
 		if (_sv2v_0)
 			;
-		writeback_data = 1'sb0;
-		case (mem_wb_payload[89-:3])
-			3'd1, 3'd5: writeback_data = mem_wb_payload[312-:32];
-			3'd2: writeback_data = mem_wb_payload[280-:32];
-			3'd3: writeback_data = mem_wb_payload[248-:32];
-			3'd4: writeback_data = mem_wb_payload[184-:32];
-			3'd0: writeback_data = 1'sb0;
-			default: writeback_data = 1'sb0;
+		serialization_state_d = serialization_state_q;
+		if (frontend_redirect_valid)
+			serialization_state_d = SERIAL_NORMAL;
+		else
+			case (serialization_state_q)
+				SERIAL_NORMAL:
+					if (serializing_id_detected) begin
+						if (serialization_pipeline_empty)
+							serialization_state_d = SERIAL_ISSUE;
+						else
+							serialization_state_d = SERIAL_DRAIN;
+					end
+				SERIAL_DRAIN:
+					if (serialization_pipeline_empty)
+						serialization_state_d = SERIAL_ISSUE;
+				SERIAL_ISSUE:
+					if (serializing_issue_fire)
+						serialization_state_d = SERIAL_BLOCK;
+				SERIAL_BLOCK:
+					if (serializing_retire)
+						serialization_state_d = SERIAL_NORMAL;
+				default: serialization_state_d = SERIAL_NORMAL;
+			endcase
+	end
+	always @(posedge clk_i or negedge rst_ni)
+		if (!rst_ni)
+			serialization_state_q <= SERIAL_NORMAL;
+		else
+			serialization_state_q <= serialization_state_d;
+	always @(*) begin
+		if (_sv2v_0)
+			;
+		id_serialization_stall = 1'b0;
+		case (serialization_state_q)
+			SERIAL_NORMAL: id_serialization_stall = serializing_id_detected;
+			SERIAL_DRAIN: id_serialization_stall = 1'b1;
+			SERIAL_ISSUE: id_serialization_stall = !serializing_id_detected;
+			SERIAL_BLOCK: id_serialization_stall = 1'b1;
+			default: id_serialization_stall = 1'b1;
 		endcase
 	end
+	assign writeback_data = mem_wb_payload[344-:32];
 	localparam [4:0] rv32i_pkg_REG_X0 = 5'd0;
-	assign register_write_enable = (((mem_wb_valid && mem_wb_payload[106]) && !mem_wb_payload[70]) && !commit_redirect_valid) && (mem_wb_payload[317-:5] != rv32i_pkg_REG_X0);
+	assign register_write_enable = (((mem_wb_valid && mem_wb_payload[106]) && !mem_wb_payload[70]) && !commit_redirect_valid) && (mem_wb_payload[349-:5] != rv32i_pkg_REG_X0);
 	rv32i_regfile u_regfile(
 		.clk_i(clk_i),
 		.rs1_index_i(decoded_rs1_index),
@@ -2316,7 +2357,7 @@ module rv32i_datapath (
 		.rs1_data_o(register_rs1_data),
 		.rs2_data_o(register_rs2_data),
 		.write_enable_i(register_write_enable),
-		.write_index_i(mem_wb_payload[317-:5]),
+		.write_index_i(mem_wb_payload[349-:5]),
 		.write_data_i(writeback_data)
 	);
 	localparam [4:0] rv32i_csr_pkg_EXC_BREAKPOINT = 5'd3;
@@ -2383,13 +2424,13 @@ module rv32i_datapath (
 		id_instruction_supported = (((decoded_control[10] || (decoded_control[5-:4] == 4'd0)) || (decoded_control[5-:4] == 4'd1)) || (decoded_control[5-:4] == 4'd2)) || (decoded_control[5-:4] == 4'd3);
 	end
 	assign baseline_stall_o = if_id_valid && !id_instruction_supported;
-	assign if_id_downstream_ready = (id_ex_input_ready && id_instruction_supported) && !id_load_use_stall;
+	assign if_id_downstream_ready = ((id_ex_input_ready && id_instruction_supported) && !id_load_use_stall) && !id_serialization_stall;
 	rv32i_id_ex u_id_ex(
 		.clk_i(clk_i),
 		.rst_ni(rst_ni),
 		.flush_i(frontend_redirect_valid),
 		.kill_i(1'b0),
-		.valid_i((if_id_valid && id_instruction_supported) && !id_load_use_stall),
+		.valid_i(((if_id_valid && id_instruction_supported) && !id_load_use_stall) && !id_serialization_stall),
 		.ready_o(id_ex_input_ready),
 		.payload_i(id_ex_payload_d),
 		.valid_o(id_ex_valid),
@@ -2419,7 +2460,7 @@ module rv32i_datapath (
 		.wb_valid_i(mem_wb_valid),
 		.wb_exception_valid_i(mem_wb_payload[70]),
 		.wb_gpr_write_i(mem_wb_payload[106]),
-		.wb_rd_index_i(mem_wb_payload[317-:5]),
+		.wb_rd_index_i(mem_wb_payload[349-:5]),
 		.wb_writeback_data_i(writeback_data),
 		.rs1_value_o(ex_rs1_value_forwarded),
 		.rs2_value_o(ex_rs2_value_forwarded),
@@ -2489,11 +2530,11 @@ module rv32i_datapath (
 	end
 	assign ex_fire = id_ex_valid && ex_mem_input_ready;
 	assign branch_redirect = (ex_fire && branch_mispredict) && !ex_exception[70];
-	assign predictor_update_valid = (ex_fire && branch_active) && !ex_exception[70];
-	assign predictor_update_pc = id_ex_payload[378-:32];
-	assign predictor_update_taken = branch_taken;
-	assign predictor_update_target = actual_next_pc;
-	assign predictor_update_pht_index = id_ex_payload[119-:8];
+	assign predictor_update_valid = (((ex_mem_valid && mem_stage_ready) && (ex_mem_payload[176-:4] != 4'd0)) && !ex_mem_payload[70]) && !commit_redirect_valid;
+	assign predictor_update_pc = ex_mem_payload[466-:32];
+	assign predictor_update_taken = ex_mem_payload[301];
+	assign predictor_update_target = ex_mem_payload[268-:32];
+	assign predictor_update_pht_index = ex_mem_payload[119-:8];
 	always @(posedge clk_i or negedge rst_ni)
 		if (!rst_ni) begin
 			bpu_branch_count_q <= 32'd0;
@@ -2504,13 +2545,13 @@ module rv32i_datapath (
 		end
 		else if (predictor_update_valid) begin
 			bpu_branch_count_q <= bpu_branch_count_q + 32'd1;
-			if (branch_mispredict)
+			if (ex_mem_payload[236])
 				bpu_mispredict_count_q <= bpu_mispredict_count_q + 32'd1;
 			else
 				bpu_correct_count_q <= bpu_correct_count_q + 32'd1;
-			if (id_ex_payload[152])
+			if (ex_mem_payload[152])
 				bpu_predicted_taken_count_q <= bpu_predicted_taken_count_q + 32'd1;
-			if (branch_taken)
+			if (ex_mem_payload[301])
 				bpu_actual_taken_count_q <= bpu_actual_taken_count_q + 32'd1;
 		end
 	assign debug_redirect_valid_o = frontend_redirect_valid;
@@ -2576,9 +2617,18 @@ module rv32i_datapath (
 		if (_sv2v_0)
 			;
 		mem_exception = ex_mem_payload[70-:71];
-		if (lsu_exception[70]) begin
-			mem_exception = lsu_exception;
-			mem_exception[63-:32] = ex_mem_payload[466-:32];
+		if (!mem_exception[70]) begin
+			if (lsu_exception[70]) begin
+				mem_exception = lsu_exception;
+				mem_exception[63-:32] = ex_mem_payload[466-:32];
+			end
+			else if (csr_read_illegal) begin
+				mem_exception[70] = 1'b1;
+				mem_exception[69] = 1'b0;
+				mem_exception[68-:5] = rv32i_csr_pkg_EXC_ILLEGAL_INSTRUCTION;
+				mem_exception[63-:32] = ex_mem_payload[466-:32];
+				mem_exception[31-:32] = ex_mem_payload[434-:32];
+			end
 		end
 	end
 	always @(*) begin
@@ -2599,9 +2649,17 @@ module rv32i_datapath (
 		if (_sv2v_0)
 			;
 		mem_wb_payload_d = 1'sb0;
-		mem_wb_payload_d[381-:32] = ex_mem_payload[466-:32];
-		mem_wb_payload_d[349-:32] = ex_mem_payload[434-:32];
-		mem_wb_payload_d[317-:5] = ex_mem_payload[402-:5];
+		mem_wb_payload_d[413-:32] = ex_mem_payload[466-:32];
+		mem_wb_payload_d[381-:32] = ex_mem_payload[434-:32];
+		mem_wb_payload_d[349-:5] = ex_mem_payload[402-:5];
+		case (ex_mem_payload[172-:3])
+			3'd1, 3'd5: mem_wb_payload_d[344-:32] = ex_mem_payload[397-:32];
+			3'd2: mem_wb_payload_d[344-:32] = lsu_load_data;
+			3'd3: mem_wb_payload_d[344-:32] = ex_mem_payload[333-:32];
+			3'd4: mem_wb_payload_d[344-:32] = csr_read_data;
+			3'd0: mem_wb_payload_d[344-:32] = 1'sb0;
+			default: mem_wb_payload_d[344-:32] = 1'sb0;
+		endcase
 		mem_wb_payload_d[312-:32] = ex_mem_payload[397-:32];
 		mem_wb_payload_d[280-:32] = lsu_load_data;
 		mem_wb_payload_d[248-:32] = ex_mem_payload[333-:32];
@@ -2628,11 +2686,11 @@ module rv32i_datapath (
 	);
 	assign commit_valid_o = mem_wb_valid;
 	assign commit_trap_o = mem_wb_payload[70];
-	assign commit_pc_o = mem_wb_payload[381-:32];
+	assign commit_pc_o = mem_wb_payload[413-:32];
 	assign commit_next_pc_o = mem_wb_payload[216-:32];
-	assign commit_instruction_o = mem_wb_payload[349-:32];
+	assign commit_instruction_o = mem_wb_payload[381-:32];
 	assign commit_rd_write_o = register_write_enable;
-	assign commit_rd_index_o = mem_wb_payload[317-:5];
+	assign commit_rd_index_o = mem_wb_payload[349-:5];
 	assign commit_rd_data_o = writeback_data;
 	initial _sv2v_0 = 0;
 endmodule

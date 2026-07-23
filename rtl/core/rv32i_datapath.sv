@@ -100,8 +100,18 @@ module rv32i_datapath #(
     logic           id_instruction_supported;
     logic           id_load_use_stall;
     logic           id_serialization_stall;
-    logic           older_pipeline_busy;
-    logic           serializing_inflight;
+    logic           serialization_pipeline_empty;
+    logic           serializing_id_detected;
+    logic           serializing_issue_fire;
+    logic           serializing_retire;
+
+    localparam logic [1:0] SERIAL_NORMAL = 2'b00;
+    localparam logic [1:0] SERIAL_DRAIN  = 2'b01;
+    localparam logic [1:0] SERIAL_ISSUE  = 2'b10;
+    localparam logic [1:0] SERIAL_BLOCK  = 2'b11;
+
+    logic [1:0] serialization_state_q;
+    logic [1:0] serialization_state_d;
     logic           id_ex_input_ready;
 
     // ==================================================================
@@ -399,42 +409,138 @@ module rv32i_datapath #(
         .load_use_stall_o    (id_load_use_stall)
     );
 
-    // STEP 11BC-B1: Activate the decoder serialization contract.
+    // STEP 11BD-B: Registered serialization controller.
     //
-    // A serializing instruction in ID waits until all older pipeline
-    // transactions have drained. Once a serializing instruction is in
-    // flight, younger instructions remain held in IF/ID until it retires.
-    assign older_pipeline_busy =
-        id_ex_valid ||
-        ex_mem_valid ||
-        mem_wb_valid;
+    // The previous implementation connected MEM/WB valid and decoded
+    // serializing control directly to frontend ready and fetch-address
+    // generation. That created a long commit-to-fetch timing path.
+    //
+    // This FSM isolates pipeline-drain and retirement decisions behind
+    // registered state. The frontend ready path now depends only on the
+    // registered serialization state and the current ID decode.
+    assign serialization_pipeline_empty =
+        !id_ex_valid &&
+        !ex_mem_valid &&
+        !mem_wb_valid;
 
-    assign serializing_inflight =
-        (
-            id_ex_valid &&
-            id_ex_payload.control.serializing
-        ) ||
-        (
-            ex_mem_valid &&
-            ex_mem_payload.control.serializing
-        ) ||
-        (
-            mem_wb_valid &&
-            mem_wb_payload.control.serializing
-        );
-
-    assign id_serialization_stall =
+    // Unsupported instructions remain governed by
+    // id_instruction_supported and do not enter the serialization FSM.
+    assign serializing_id_detected =
         if_id_valid &&
-        (
-            (
-                decoded_control.serializing &&
-                older_pipeline_busy
-            ) ||
-            (
-                !decoded_control.serializing &&
-                serializing_inflight
-            )
-        );
+        id_instruction_supported &&
+        decoded_control.serializing;
+
+    assign serializing_issue_fire =
+        (serialization_state_q == SERIAL_ISSUE) &&
+        serializing_id_detected &&
+        id_ex_input_ready &&
+        !id_load_use_stall;
+
+    assign serializing_retire =
+        mem_wb_valid &&
+        mem_wb_payload.control.serializing;
+
+    always_comb begin
+        serialization_state_d =
+            serialization_state_q;
+
+        if (frontend_redirect_valid) begin
+            // A redirect flushes the pending younger instruction and
+            // cancels any serialization transaction being tracked.
+            serialization_state_d = SERIAL_NORMAL;
+        end
+        else begin
+            case (serialization_state_q)
+                SERIAL_NORMAL: begin
+                    if (serializing_id_detected) begin
+                        if (serialization_pipeline_empty) begin
+                            serialization_state_d =
+                                SERIAL_ISSUE;
+                        end
+                        else begin
+                            serialization_state_d =
+                                SERIAL_DRAIN;
+                        end
+                    end
+                end
+
+                SERIAL_DRAIN: begin
+                    // Hold the serializing instruction in IF/ID while
+                    // all older instructions drain from the pipeline.
+                    if (serialization_pipeline_empty) begin
+                        serialization_state_d =
+                            SERIAL_ISSUE;
+                    end
+                end
+
+                SERIAL_ISSUE: begin
+                    // Admit exactly the pending serializing instruction.
+                    if (serializing_issue_fire) begin
+                        serialization_state_d =
+                            SERIAL_BLOCK;
+                    end
+                end
+
+                SERIAL_BLOCK: begin
+                    // Younger instructions remain held until the
+                    // serializing instruction reaches retirement.
+                    if (serializing_retire) begin
+                        serialization_state_d =
+                            SERIAL_NORMAL;
+                    end
+                end
+
+                default: begin
+                    serialization_state_d =
+                        SERIAL_NORMAL;
+                end
+            endcase
+        end
+    end
+
+    always_ff @(posedge clk_i or negedge rst_ni) begin
+        if (!rst_ni) begin
+            serialization_state_q <=
+                SERIAL_NORMAL;
+        end
+        else begin
+            serialization_state_q <=
+                serialization_state_d;
+        end
+    end
+
+    always_comb begin
+        id_serialization_stall = 1'b0;
+
+        case (serialization_state_q)
+            SERIAL_NORMAL: begin
+                // Detect and hold a new serializing instruction for one
+                // cycle so that it cannot slip into ID/EX before the
+                // registered controller takes ownership.
+                id_serialization_stall =
+                    serializing_id_detected;
+            end
+
+            SERIAL_DRAIN: begin
+                id_serialization_stall = 1'b1;
+            end
+
+            SERIAL_ISSUE: begin
+                // The pending instruction must still be the supported
+                // serializing instruction retained in IF/ID.
+                id_serialization_stall =
+                    !serializing_id_detected;
+            end
+
+            SERIAL_BLOCK: begin
+                id_serialization_stall = 1'b1;
+            end
+
+            default: begin
+                id_serialization_stall = 1'b1;
+            end
+        endcase
+    end
 
     // ==================================================================
     // Writeback selection
