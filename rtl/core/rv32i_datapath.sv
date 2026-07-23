@@ -137,7 +137,7 @@ module rv32i_datapath #(
 
     logic           branch_active;
     addr_t          actual_next_pc;
-    logic           branch_mispredict;
+    logic           ex_mem_branch_mispredict;
     logic           branch_redirect;
     addr_t          branch_redirect_pc;
     logic           ex_fire;
@@ -822,9 +822,6 @@ module rv32i_datapath #(
             actual_next_pc = id_ex_payload.pc + 32'd4;
         end
 
-        branch_mispredict =
-            branch_active &&
-            (actual_next_pc != id_ex_payload.prediction.predicted_pc);
     end
 
     always_comb begin
@@ -848,6 +845,23 @@ module rv32i_datapath #(
         id_ex_valid &&
         ex_mem_input_ready;
 
+    // STEP 11BK-B: Recompute mispredict from registered EX/MEM state.
+    //
+    // The previous implementation compared actual_next_pc against the
+    // predicted PC in EX and captured the comparison result in EX/MEM.
+    // That placed WB forwarding, branch calculation and the 32-bit equality
+    // comparator in one reg-to-reg path.
+    //
+    // Both PCs and branch control are already registered in EX/MEM.
+    // Recompute the redundant mispredict indication from those registered
+    // values without changing the STEP 11BJ redirect latency.
+    assign ex_mem_branch_mispredict =
+        (ex_mem_payload.control.branch_op != BR_NONE) &&
+        (
+            ex_mem_payload.actual_next_pc !=
+            ex_mem_payload.prediction.predicted_pc
+        );
+
     // STEP 11BJ-B: Registered EX/MEM branch redirect.
     //
     // The previous redirect originated from the combinational EX result.
@@ -860,7 +874,7 @@ module rv32i_datapath #(
     assign branch_redirect =
         ex_mem_valid &&
         mem_stage_ready &&
-        ex_mem_payload.branch_mispredict &&
+        ex_mem_branch_mispredict &&
         !ex_mem_payload.exception.valid &&
         !commit_redirect_valid;
 
@@ -908,7 +922,7 @@ module rv32i_datapath #(
             bpu_branch_count_q <=
                 bpu_branch_count_q + 32'd1;
 
-            if (ex_mem_payload.branch_mispredict) begin
+            if (ex_mem_branch_mispredict) begin
                 bpu_mispredict_count_q <=
                     bpu_mispredict_count_q + 32'd1;
             end
@@ -950,7 +964,7 @@ module rv32i_datapath #(
         ex_mem_payload_d.branch_taken      = branch_taken;
         ex_mem_payload_d.branch_target     = branch_target;
         ex_mem_payload_d.actual_next_pc    = actual_next_pc;
-        ex_mem_payload_d.branch_mispredict = branch_mispredict;
+        ex_mem_payload_d.branch_mispredict = 1'b0;
 
         ex_mem_payload_d.csr_address =
             id_ex_payload.csr_address;
