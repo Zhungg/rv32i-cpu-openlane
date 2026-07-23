@@ -1,0 +1,23 @@
+RV32I CLEAN-CLONE AUDIT
+
+Repository       : https://github.com/Zhungg/rv32i-cpu-openlane.git
+Branch           : release/v1.0.0-prep
+Verified commit  : 3158c90c3f8777748298e26a6d1527f4728ebcd6
+Source manifest  : PASS
+RTL regeneration : PASS
+Structure check  : PASS
+Frontend baseline: PASS
+Yosys readiness  : PASS
+Artifact audit   : PASS
+
+FINAL RESULT: PASS
+
+AUDIT METADATA
+
+Audit date       : 2026-07-24T05:29:57+07:00
+Clone directory  : /home/zhung/projects/rv32i_release_audit_clone
+Remote URL       : https://github.com/Zhungg/rv32i-cpu-openlane.git
+Branch           : release/v1.0.0-prep
+Verified source  : 3158c90c3f8777748298e26a6d1527f4728ebcd6
+sv2v             : sv2v v0.0.13-11-g6662fa5
+Yosys            : Yosys 0.52 (git sha1 fee39a3284c90249e1d9684cf6944ffbbcbb8f90)
