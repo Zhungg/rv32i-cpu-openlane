@@ -222,7 +222,6 @@ module rv32i_fetch_unit #(
             pending_prediction_q <= '0;
 
             buffer_valid_q       <= 1'b0;
-            buffer_payload_q     <= '0;
 
             skid_valid_q         <= 1'b0;
 
@@ -286,7 +285,6 @@ module rv32i_fetch_unit #(
                         // Enqueue without dequeue.
                         if (!buffer_valid_q) begin
                             buffer_valid_q   <= 1'b1;
-                            buffer_payload_q <= response_payload;
                         end
                         else if (!skid_valid_q) begin
                             skid_valid_q   <= 1'b1;
@@ -297,7 +295,6 @@ module rv32i_fetch_unit #(
                         // Dequeue without enqueue.
                         if (skid_valid_q) begin
                             buffer_valid_q   <= 1'b1;
-                            buffer_payload_q <= skid_payload_q;
                             skid_valid_q     <= 1'b0;
                         end
                         else begin
@@ -312,7 +309,6 @@ module rv32i_fetch_unit #(
                         // response_enqueue cannot be high while skid is
                         // valid because imem_rsp_ready_o is then low.
                         buffer_valid_q   <= 1'b1;
-                        buffer_payload_q <= response_payload;
                         skid_valid_q     <= 1'b0;
                     end
 
@@ -342,6 +338,38 @@ module rv32i_fetch_unit #(
             !skid_valid_q
         ) begin
             skid_payload_q <= response_payload;
+        end
+    end
+
+
+    // STEP 11BI-B: Independent head payload data bank.
+    //
+    // buffer_payload_q is meaningful only while buffer_valid_q is asserted.
+    // Data capture is separated from redirect and FIFO-valid control so that
+    // branch_redirect/id_ex_valid do not drive every bit of the head payload
+    // register bank.
+    //
+    // Load a response directly into head when:
+    //   - the FIFO was empty, or
+    //   - the current head is consumed in the same cycle.
+    //
+    // Move skid into head only for dequeue without a replacement response.
+    always_ff @(posedge clk_i) begin
+        if (
+            response_enqueue &&
+            (
+                !buffer_valid_q ||
+                fetch_fire
+            )
+        ) begin
+            buffer_payload_q <= response_payload;
+        end
+        else if (
+            fetch_fire &&
+            !response_enqueue &&
+            skid_valid_q
+        ) begin
+            buffer_payload_q <= skid_payload_q;
         end
     end
 
