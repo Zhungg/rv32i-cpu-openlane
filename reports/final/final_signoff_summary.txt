@@ -1,0 +1,31 @@
+RV32I CORE — FINAL RTL-TO-GDSII SIGNOFF
+========================================
+
+Design       : rv32i_core
+Architecture : RV32I five-stage pipelined CPU
+PDK          : Sky130A
+Flow         : OpenLane 2
+Clock port   : clk_i
+Clock period : 20.000 ns
+Final run    : RUN_2026-07-23_18-56-04
+
+TIMING
+------
+Worst setup WNS : +0.252381 ns
+Worst setup view: max_ss_100C_1v60
+Worst hold WNS  : +0.254094 ns
+Worst hold view : min_ff_n40C_1v95
+Setup status    : MET
+Hold status     : MET
+
+PHYSICAL VERIFICATION
+---------------------
+Antenna : PASS
+LVS     : PASS
+DRC     : PASS
+
+FINAL STATUS
+------------
+RTL-to-GDSII implementation completed.
+MCMM setup and hold timing closure achieved.
+Physical verification passed.

@@ -1,0 +1,9 @@
+Startpoint: _31184_ (rising edge-triggered flip-flop clocked by clk_i)
+Endpoint: _31186_ (rising edge-triggered flip-flop clocked by clk_i)
+Path Group: clk_i
+Path Type: max
+                                             21.640507   data arrival time
+                                             21.892889   data required time
+                                             21.892889   data required time
+                                            -21.640507   data arrival time
+                                              0.252381   slack (MET)
