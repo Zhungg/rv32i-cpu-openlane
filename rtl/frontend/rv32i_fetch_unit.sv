@@ -225,7 +225,6 @@ module rv32i_fetch_unit #(
             buffer_payload_q     <= '0;
 
             skid_valid_q         <= 1'b0;
-            skid_payload_q       <= '0;
 
             redirect_block_q     <= 1'b0;
         end
@@ -291,7 +290,6 @@ module rv32i_fetch_unit #(
                         end
                         else if (!skid_valid_q) begin
                             skid_valid_q   <= 1'b1;
-                            skid_payload_q <= response_payload;
                         end
                     end
 
@@ -324,6 +322,26 @@ module rv32i_fetch_unit #(
                     end
                 endcase
             end
+        end
+    end
+
+
+    // STEP 11BH-B: Independent skid payload data bank.
+    //
+    // skid_payload_q is architecturally meaningful only while skid_valid_q
+    // is asserted. Its data capture therefore does not need to be nested
+    // inside redirect or FIFO-transition control.
+    //
+    // On simultaneous head dequeue and response enqueue, this register may
+    // capture unused data while skid_valid_q remains clear. That is safe and
+    // removes redirect_valid_i and fetch_fire from the skid payload D cone.
+    always_ff @(posedge clk_i) begin
+        if (
+            response_enqueue &&
+            buffer_valid_q &&
+            !skid_valid_q
+        ) begin
+            skid_payload_q <= response_payload;
         end
     end
 
