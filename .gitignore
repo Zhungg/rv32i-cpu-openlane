@@ -43,3 +43,28 @@ reports/**/*.tmp
 # Build artifacts
 build/
 dist/
+# Local Physical Design and debug artifacts
+/reports/run_snapshots/
+/reports/maintenance/
+/reports/step11/
+/reports/final/final_run_path.txt
+# OpenLane intermediate and backup files
+openlane/*/out.def
+openlane/*/config.*.json
+openlane/*/config.json.*
+openlane/*/src/*.step*
+openlane/*/src/*.stale
+# Local engineering backups
+Makefile.*
+run_openlane.sh.step*
+scripts/*.before*
+scripts/*.step*
+tb/**/*.before*
+tb/**/*.step*
+rtl/**/*.before*
+rtl/**/*.step*
+*.stale
+# Duplicate local checksum files
+/generated_rtl_*.sha256
+# Compressed run snapshots
+*.tar.gz

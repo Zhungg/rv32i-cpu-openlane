@@ -1,0 +1,47 @@
+{
+  "DESIGN_NAME": "rv32i_core",
+  "VERILOG_FILES": [
+    "dir::src/rv32i_core.v"
+  ],
+  "CLOCK_PORT": "clk_i",
+  "CLOCK_PERIOD": 20.0,
+  "FP_CORE_UTIL": 35,
+  "PL_TARGET_DENSITY": 0.45,
+  "ERROR_ON_LINTER_ERRORS": false,
+  "SYNTH_STRATEGY": "AREA 0",
+  "RUN_KLAYOUT_XOR": false,
+  "ERROR_ON_LINTER_WARNINGS": false,
+  "PNR_SDC_FILE": "dir::sdc/rv32i_core.sdc",
+  "SIGNOFF_SDC_FILE": "dir::sdc/rv32i_core.sdc",
+  "RUN_ANTENNA_REPAIR": true,
+  "RUN_HEURISTIC_DIODE_INSERTION": false,
+  "GRT_ANTENNA_ITERS": 12,
+  "GRT_ANTENNA_MARGIN": 50,
+  "RUN_POST_GRT_DESIGN_REPAIR": true,
+  "RUN_POST_GRT_RESIZER_TIMING": true,
+  "DESIGN_REPAIR_MAX_CAP_PCT": 10,
+  "DESIGN_REPAIR_MAX_SLEW_PCT": 10,
+  "GRT_DESIGN_REPAIR_MAX_CAP_PCT": 5,
+  "GRT_DESIGN_REPAIR_MAX_SLEW_PCT": 5,
+  "GRT_RESIZER_SETUP_MAX_BUFFER_PCT": 75,
+  "GPL_CELL_PADDING": 1,
+  "DPL_CELL_PADDING": 1,
+  "DIODE_PADDING": 1,
+  "GRT_RESIZER_GATE_CLONING": true,
+  "meta": {
+    "version": 2,
+    "flow": "Classic",
+    "substituting_steps": {
+      "+OpenROAD.ResizerTimingPostGRT": "OpenROAD.RepairAntennas",
+      "+OpenROAD.DetailedRouting": "Odb.InsertECODiodes",
+      "+Odb.InsertECODiodes": "OpenROAD.DetailedRouting"
+    }
+  },
+  "GRT_RESIZER_RUN_GRT": true,
+  "DESIGN_REPAIR_MAX_WIRE_LENGTH": 0,
+  "GRT_DESIGN_REPAIR_MAX_WIRE_LENGTH": 0,
+  "DRT_ANTENNA_REPAIR_ITERS": 3,
+  "DRT_ANTENNA_MARGIN": 20,
+  "DRT_OPT_ITERS": 64,
+  "INSERT_ECO_DIODES": []
+}

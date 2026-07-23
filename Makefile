@@ -140,7 +140,7 @@ check-rtl-source-list:
 
 .PHONY: check-yosys-synthesis-readiness
 check-yosys-synthesis-readiness:
-	bash scripts/check_yosys_synthesis_readiness.sh
+	bash scripts/check_yosys_synthesis_readiness_sv2v.sh
 
 .PHONY: generate-openlane-rtl
 generate-openlane-rtl:

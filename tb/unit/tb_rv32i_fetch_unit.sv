@@ -38,6 +38,12 @@ module tb_rv32i_fetch_unit;
         .redirect_valid_i (redirect_valid),
         .redirect_pc_i    (redirect_pc),
 
+        .predictor_update_valid_i     (1'b0),
+        .predictor_update_pc_i        ('0),
+        .predictor_update_taken_i     (1'b0),
+        .predictor_update_target_i    ('0),
+        .predictor_update_pht_index_i ('0),
+
         .imem_req_valid_o (imem_req_valid),
         .imem_req_ready_i (imem_req_ready),
         .imem_req_o       (imem_req),
@@ -222,9 +228,9 @@ module tb_rv32i_fetch_unit;
         );
 
         check(
-            !fetch_payload.prediction.valid &&
-            !fetch_payload.prediction.taken &&
-            (fetch_payload.prediction.next_pc == 32'h0000_0004),
+            fetch_payload.prediction.valid &&
+            !fetch_payload.prediction.predicted_taken &&
+            (fetch_payload.prediction.predicted_pc == 32'h0000_0004),
             "Baseline prediction metadata is sequential"
         );
 
@@ -338,7 +344,7 @@ module tb_rv32i_fetch_unit;
         );
 
         check(
-            fetch_payload.prediction.next_pc == 32'h0000_0104,
+            fetch_payload.prediction.predicted_pc == 32'h0000_0104,
             "Redirect-path metadata has correct sequential next PC"
         );
 
