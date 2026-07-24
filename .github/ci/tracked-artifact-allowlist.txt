@@ -1,0 +1,10 @@
+# Legacy engineering checkpoints already present before CI adoption.
+# New files matching the artifact blacklist are still rejected.
+
+config/backup/rtl.f.before_step8a.20260719_172034
+openlane/rv32i_core/config.step09e_best_10nets_10pins.json
+openlane/rv32i_core/config.step10c_targeted_eco_pv_clean.json
+reports/step11/step11bk_c_endpoint_mapping.txt
+reports/step11/step11bk_c_path_summary.txt
+reports/step11/step11bk_c_timing_summary.txt
+reports/step11/step11s_acceptance_gate.txt
