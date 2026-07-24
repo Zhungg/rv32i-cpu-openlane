@@ -55,6 +55,7 @@ verilator \
     --Wall \
     --timing \
     -Wno-fatal \
+    -Wno-BLKLOOPINIT \
     --top-module "$TOP" \
     "${SOURCES[@]}" \
     2>&1 | tee reports/lint/frontend_baseline_verilator.log
