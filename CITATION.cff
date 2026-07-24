@@ -3,16 +3,14 @@ message: "If you use this project, please cite it using the metadata below."
 title: "RV32I 5-Stage Pipelined CPU Core — RTL-to-GDSII Physical Implementation"
 type: software
 authors:
-  - alias: "Zhungg"
-version: "1.0.0"
-date-released: tag v1.0.0
-Tagger: Nguyễn Việt Hùng <mailcuahunuque@gmail.com>
-
-RV32I CPU v1.0.0: Sky130A RTL-to-GDSII timing-closed release
-2026-07-24
+  - family-names: "Nguyễn"
+    given-names: "Việt Hùng"
+    alias: "Zhungg"
+version: "1.0.1"
+date-released: "2026-07-24"
 license: "Apache-2.0"
 repository-code: "https://github.com/Zhungg/rv32i-cpu-openlane"
-url: "https://github.com/Zhungg/rv32i-cpu-openlane/releases/tag/v1.0.0"
+url: "https://github.com/Zhungg/rv32i-cpu-openlane/releases/tag/v1.0.1"
 keywords:
   - "RISC-V"
   - "RV32I"

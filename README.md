@@ -1,6 +1,6 @@
 # RV32I CPU — Sky130A RTL-to-GDSII
 
-![Release](https://img.shields.io/badge/release-v1.0.0-blue)
+![Release](https://img.shields.io/badge/release-v1.0.1-blue)
 [![RV32I RTL CI](https://github.com/Zhungg/rv32i-cpu-openlane/actions/workflows/rtl-ci.yml/badge.svg?branch=main)](https://github.com/Zhungg/rv32i-cpu-openlane/actions/workflows/rtl-ci.yml)
 ![ISA](https://img.shields.io/badge/ISA-RV32I-success)
 ![Pipeline](https://img.shields.io/badge/microarchitecture-5--stage%20pipeline-informational)
@@ -28,7 +28,11 @@ Specification
 
 ## Release Status
 
-The current engineering release is **v1.0.0**.
+The current engineering release is **v1.0.1**.
+
+`v1.0.1` is a repository-maintenance release. The verified RTL, generated
+OpenLane RTL, physical implementation, and signoff baseline remain unchanged
+from `v1.0.0`.
 
 | Item                           |   Result |
 | ------------------------------ | -------: |
@@ -96,7 +100,8 @@ flowchart LR
 
 ## Physical-Design Signoff
 
-The v1.0.0 release is based on the following signoff run:
+The unchanged physical-design baseline, originally published in
+`v1.0.0`, is based on the following signoff run:
 
 | Metric               |                    Result |
 | -------------------- | ------------------------: |
@@ -200,7 +205,7 @@ or inspect the project `Makefile`.
 ```bash
 git clone https://github.com/Zhungg/rv32i-cpu-openlane.git
 cd rv32i-cpu-openlane
-git checkout v1.0.0
+git checkout v1.0.1
 ```
 
 ### 2. Verify the project structure
@@ -334,6 +339,11 @@ The reported signoff status refers to the open-source Sky130A/OpenLane 2 impleme
 **Nguyễn Việt Hùng**
 
 Electronics and Telecommunications student pursuing ASIC Physical Design and Digital IC Design.
+
+## Changelog
+
+Release history and maintenance changes are documented in
+[`CHANGELOG.md`](CHANGELOG.md).
 
 ## Citation
 
