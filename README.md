@@ -53,20 +53,20 @@ from `v1.0.0`.
 The design is organized as a modular five-stage CPU pipeline:
 
 ```mermaid
-flowchart LR
-    IMEM[Instruction Memory Interface]
-    FETCH["IF<br/>PC, Fetch Control, BPU"]
-    IFID["IF/ID<br/>Pipeline Register"]
-    DECODE["ID<br/>Decoder, Register File, CSR"]
-    IDEX["ID/EX<br/>Pipeline Register"]
-    EXECUTE["EX<br/>ALU, Branch Compare, Target Generation"]
-    EXMEM["EX/MEM<br/>Pipeline Register"]
-    MEMORY["MEM<br/>LSU and Data Interface"]
-    MEMWB["MEM/WB<br/>Pipeline Register"]
-    COMMIT["WB / Commit<br/>Retirement and Register Writeback"]
-    DMEM[Data Memory Interface]
-    CONTROL["Hazard, Forwarding,<br/>Stall, Flush, and Kill"]
-    TRAP["Trap, Exception,<br/>Interrupt, and Redirect"]
+graph LR
+    IMEM["Instruction Memory Interface"]
+    FETCH["IF: PC, Fetch Control, BPU"]
+    IFID["IF/ID Pipeline Register"]
+    DECODE["ID: Decoder, Register File, CSR"]
+    IDEX["ID/EX Pipeline Register"]
+    EXECUTE["EX: ALU, Branch Compare, Target Generation"]
+    EXMEM["EX/MEM Pipeline Register"]
+    MEMORY["MEM: LSU and Data Interface"]
+    MEMWB["MEM/WB Pipeline Register"]
+    COMMIT["WB: Retirement and Register Writeback"]
+    DMEM["Data Memory Interface"]
+    CONTROL["Hazard, Forwarding, Stall, Flush, Kill"]
+    TRAP["Trap, Exception, Interrupt, Redirect"]
 
     IMEM --> FETCH
     FETCH --> IFID
@@ -77,13 +77,15 @@ flowchart LR
     EXMEM --> MEMORY
     MEMORY --> MEMWB
     MEMWB --> COMMIT
-    MEMORY <--> DMEM
 
-    CONTROL -. controls .-> FETCH
-    CONTROL -. controls .-> DECODE
-    CONTROL -. forwarding .-> EXECUTE
-    TRAP -. redirect .-> FETCH
-    EXECUTE -. branch redirect .-> FETCH
+    MEMORY --> DMEM
+    DMEM --> MEMORY
+
+    CONTROL -.-> FETCH
+    CONTROL -.-> DECODE
+    CONTROL -.-> EXECUTE
+    TRAP -.-> FETCH
+    EXECUTE -.-> FETCH
 ```
 
 ### Main RTL Areas
