@@ -335,3 +335,18 @@ The reported signoff status refers to the open-source Sky130A/OpenLane 2 impleme
 
 Electronics and Telecommunications student pursuing ASIC Physical Design and Digital IC Design.
 
+## Citation
+
+Citation metadata for this project is available in [`CITATION.cff`](CITATION.cff).
+GitHub can use this file to generate APA and BibTeX citations.
+
+
+## License
+
+The original material in this repository is licensed under the
+[Apache License 2.0](LICENSE).
+
+External tools, PDK files, standard-cell libraries, specifications, and
+third-party material remain subject to their respective licenses. See
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
+
