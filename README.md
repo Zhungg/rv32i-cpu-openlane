@@ -1,6 +1,7 @@
 # RV32I CPU — Sky130A RTL-to-GDSII
 
 ![Release](https://img.shields.io/badge/release-v1.0.0-blue)
+[![RV32I RTL CI](https://github.com/Zhungg/rv32i-cpu-openlane/actions/workflows/rtl-ci.yml/badge.svg?branch=main)](https://github.com/Zhungg/rv32i-cpu-openlane/actions/workflows/rtl-ci.yml)
 ![ISA](https://img.shields.io/badge/ISA-RV32I-success)
 ![Pipeline](https://img.shields.io/badge/microarchitecture-5--stage%20pipeline-informational)
 ![PDK](https://img.shields.io/badge/PDK-Sky130A-orange)

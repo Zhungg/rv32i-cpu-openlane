@@ -55,10 +55,13 @@ jobs:
           trap 'rm -f "$candidates" "$approved"' EXIT
 
           git ls-files |
-            grep -E               '(^openlane/.*/runs/[^.]|^reports/step11/|^reports/run_snapshots/|^reports/maintenance/|(^|/)out\.def$|\.tar\.gz$|\.before|\.stale|config\.step|\.vcd$|\.fst$)' |
+            grep -E \
+              '(^openlane/.*/runs/[^.]|^reports/step11/|^reports/run_snapshots/|^reports/maintenance/|(^|/)out\.def$|\.tar\.gz$|\.before|\.stale|config\.step|\.vcd$|\.fst$)' |
             sort -u > "$candidates" || true
 
-          grep -Ev '^[[:space:]]*(#|$)' "$allowlist" |
+          grep -Ev \
+            '^[[:space:]]*(#|$)' \
+            "$allowlist" |
             sort -u > "$approved"
 
           unexpected="$(
@@ -221,11 +224,13 @@ jobs:
         shell: bash
         run: |
           expected_hash="$(
-            awk '{print $1}'               reports/github_release_audit/step3/generated_rtl_after.sha256
+            awk '{print $1}' \
+              reports/github_release_audit/step3/generated_rtl_after.sha256
           )"
 
           committed_hash="$(
-            sha256sum openlane/rv32i_core/src/rv32i_core.v |
+            sha256sum \
+              openlane/rv32i_core/src/rv32i_core.v |
             awk '{print $1}'
           )"
 
@@ -234,9 +239,13 @@ jobs:
 
           test "$expected_hash" = "$committed_hash"
 
-          echo "SIGNOFF_RTL_HASH=$expected_hash" >> "$GITHUB_ENV"
+          echo \
+            "SIGNOFF_RTL_HASH=$expected_hash" \
+            >> "$GITHUB_ENV"
 
-          cp             openlane/rv32i_core/src/rv32i_core.v             /tmp/rv32i_core.signoff.v
+          cp \
+            openlane/rv32i_core/src/rv32i_core.v \
+            /tmp/rv32i_core.signoff.v
 
           echo "Committed signoff RTL integrity: PASS"
 
@@ -246,16 +255,20 @@ jobs:
           make generate-openlane-rtl
 
           first_hash="$(
-            sha256sum openlane/rv32i_core/src/rv32i_core.v |
+            sha256sum \
+              openlane/rv32i_core/src/rv32i_core.v |
             awk '{print $1}'
           )"
 
-          cp             openlane/rv32i_core/src/rv32i_core.v             /tmp/rv32i_core.ci-first.v
+          cp \
+            openlane/rv32i_core/src/rv32i_core.v \
+            /tmp/rv32i_core.ci-first.v
 
           make generate-openlane-rtl
 
           second_hash="$(
-            sha256sum openlane/rv32i_core/src/rv32i_core.v |
+            sha256sum \
+              openlane/rv32i_core/src/rv32i_core.v |
             awk '{print $1}'
           )"
 
@@ -265,21 +278,36 @@ jobs:
 
           test "$first_hash" = "$second_hash"
 
-          cmp -s             /tmp/rv32i_core.ci-first.v             openlane/rv32i_core/src/rv32i_core.v
+          cmp -s \
+            /tmp/rv32i_core.ci-first.v \
+            openlane/rv32i_core/src/rv32i_core.v
 
           mkdir -p reports/yosys
 
-          if cmp -s               /tmp/rv32i_core.signoff.v               /tmp/rv32i_core.ci-first.v; then
+          if cmp -s \
+              /tmp/rv32i_core.signoff.v \
+              /tmp/rv32i_core.ci-first.v; then
             echo "CI output is bit-identical to signoff RTL."
           else
-            echo "::notice title=sv2v toolchain drift::Pinned CI sv2v output is deterministic but differs from the signed v1.0.0 generated RTL."
+            echo \
+              "::notice title=sv2v toolchain drift::Pinned CI sv2v output is deterministic but differs from the signed v1.0.0 generated RTL."
 
-            diff -u               /tmp/rv32i_core.signoff.v               /tmp/rv32i_core.ci-first.v               > reports/yosys/ci_sv2v_vs_signoff.diff               || true
+            diff -u \
+              /tmp/rv32i_core.signoff.v \
+              /tmp/rv32i_core.ci-first.v \
+              > reports/yosys/ci_sv2v_vs_signoff.diff \
+              || true
           fi
 
-          git restore --source=HEAD --             openlane/rv32i_core/src/rv32i_core.v
+          git restore \
+            --source=HEAD \
+            -- \
+            openlane/rv32i_core/src/rv32i_core.v
 
-          git diff --exit-code --             openlane/rv32i_core/src/rv32i_core.v
+          git diff \
+            --exit-code \
+            -- \
+            openlane/rv32i_core/src/rv32i_core.v
 
           echo "Pinned-toolchain RTL determinism: PASS"
 
