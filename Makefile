@@ -149,3 +149,22 @@ generate-openlane-rtl:
 .PHONY: extract-openlane-qor
 extract-openlane-qor:
 	bash scripts/extract_openlane_qor.sh
+
+# -----------------------------------------------------------------------------
+# Physical-Design QoR Baseline / Optimization Campaign
+# -----------------------------------------------------------------------------
+
+FINAL_SIGNOFF_RUN ?= openlane/rv32i_core/runs/RUN_2026-07-23_18-56-04
+RUN_DIR ?= $(FINAL_SIGNOFF_RUN)
+QOR_LABEL ?= baseline_v1.0.0
+
+.PHONY: extract-final-qor
+extract-final-qor:
+	python3 scripts/extract_final_qor.py \
+		--run "$(RUN_DIR)" \
+		--label "$(QOR_LABEL)" \
+		--out-dir reports/qor
+
+.PHONY: show-final-qor
+show-final-qor:
+	@cat "reports/qor/$(QOR_LABEL).md"
