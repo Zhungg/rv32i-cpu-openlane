@@ -1,27 +1,53 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-required=(
-  docs/spec rtl/pkg rtl/core rtl/frontend rtl/decode rtl/execute
-  rtl/memory rtl/pipeline rtl/control rtl/commit rtl/trap
-  tb/unit tb/core tb/memory_models tb/programs
-  synth/yosys sta/opensta
-  openlane/rv32i_core openlane/rv32i_core/runs
-  openlane/rv32i_soc openlane/rv32i_soc/runs
-  reports reports/openlane deliverables
+required_dirs=(
+  docs/spec
+  rtl/pkg
+  rtl/core
+  rtl/frontend
+  rtl/decode
+  rtl/execute
+  rtl/memory
+  rtl/pipeline
+  rtl/control
+  rtl/commit
+  rtl/trap
+  tb/unit
+  tb/core
+  tb/memory_models
+  tb/programs
+  synth/yosys
+  synth/yosys/work
+  sta/opensta
+  sta/opensta/work
+  openlane/rv32i_core
+  openlane/rv32i_core/runs
+  reports
+  reports/signoff
+  deliverables
+)
+
+required_files=(
+  openlane/rv32i_core/runs/.gitkeep
+  synth/yosys/work/.gitkeep
+  sta/opensta/work/.gitkeep
+  tb/programs/README.md
+  deliverables/README.md
 )
 
 missing=0
-for dir in "${required[@]}"; do
+
+for dir in "${required_dirs[@]}"; do
   if [[ ! -d "$dir" ]]; then
-    echo "MISSING: $dir"
+    echo "MISSING DIR : $dir"
     missing=1
   fi
 done
 
-for keep in openlane/rv32i_core/runs/.gitkeep openlane/rv32i_soc/runs/.gitkeep; do
-  if [[ ! -f "$keep" ]]; then
-    echo "MISSING: $keep"
+for file in "${required_files[@]}"; do
+  if [[ ! -f "$file" ]]; then
+    echo "MISSING FILE: $file"
     missing=1
   fi
 done

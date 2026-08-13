@@ -2,49 +2,46 @@
 
 ```text
 rv32i_cpu_project/
-├── config/                 # Cấu hình chung và file list
-├── docs/                   # Audit, specification, diagram, review
-├── rtl/                    # Toàn bộ synthesizable RTL
-│   ├── pkg/                # Package, typedef, constant, enum
-│   ├── core/               # Top core và datapath/control cấp cao
-│   ├── frontend/           # PC, fetch, BPU, BTB, PHT, GHR
-│   ├── decode/             # Decoder, immediate, register file
-│   ├── execute/            # ALU, branch compare, target generation
-│   ├── memory/             # LSU, aligner, transaction/fence control
-│   ├── pipeline/           # IF/ID, ID/EX, EX/MEM, MEM/WB
-│   ├── control/            # Hazard, forwarding, stall/flush/kill
-│   ├── commit/             # Writeback, retirement/commit
-│   ├── trap/               # Exception, CSR, interrupt, trap redirect
-│   ├── infrastructure/     # Reset, clock enable, DFT preparation
-│   └── soc/                # SoC wrapper, address decoder, memories
-├── tb/                     # Verification environment
-│   ├── common/             # Tasks, macros, scoreboard, interfaces
-│   ├── unit/               # Unit-level self-checking testbench
-│   ├── core/               # CPU-level testbench
-│   ├── memory_models/      # IMEM/DMEM/bus behavioral models
-│   ├── programs/           # Assembly/C/HEX regression programs
-│   └── formal/             # Assertions, bind files, RVFI checks
-├── sim/                    # Simulator-specific build/run files
-├── sw/                     # Bare-metal support, linker, startup code
-├── synth/yosys/            # Yosys synthesis flow độc lập
-├── sta/opensta/            # Standalone OpenSTA flow
-├── openlane/               # OpenLane 2 design directories
-│   ├── rv32i_core/
-│   │   ├── config.json     # Tạo sau khi top-level được chốt
-│   │   ├── pin_order.cfg   # Tạo ở giai đoạn floorplan
-│   │   └── runs/           # OpenLane tự sinh RUN_<timestamp>
-│   └── rv32i_soc/
-│       ├── config.json
-│       ├── pin_order.cfg
-│       └── runs/
-├── formal/                 # Formal/equivalence configuration
-├── scripts/                # Automation scripts dùng chung
-├── ci/                     # Continuous integration
-├── reports/                # Báo cáo chọn lọc, nhẹ, có thể commit
-│   └── openlane/           # QoR/signoff summary trích từ run được chọn
-├── deliverables/           # Final netlist/layout/timing/signoff output
-├── audit_sources/          # Hai repo nguồn dùng cho audit/tham khảo
-└── archive/                # Nội dung cũ không còn thuộc active flow
+├── config/                 # Shared RTL/file-list configuration
+├── docs/                   # Architecture and design documentation
+├── rtl/                    # Synthesizable SystemVerilog RTL
+│   ├── pkg/
+│   ├── core/
+│   ├── frontend/
+│   ├── decode/
+│   ├── execute/
+│   ├── memory/
+│   ├── pipeline/
+│   ├── control/
+│   ├── commit/
+│   ├── trap/
+│   ├── infrastructure/
+│   └── soc/
+├── tb/
+│   ├── common/
+│   ├── unit/
+│   ├── core/
+│   ├── memory_models/
+│   ├── programs/           # Current scope documented in README.md
+│   └── formal/
+├── sim/
+│   └── waves/              # Generated simulation waveforms
+├── synth/yosys/
+│   └── work/               # Generated synthesis workspace
+├── sta/opensta/
+│   └── work/               # Generated standalone STA workspace
+├── openlane/
+│   ├── rv32i_core/         # Active core RTL-to-GDSII flow
+│   │   └── runs/           # Raw generated OpenLane runs
+│   └── rv32i_soc/          # Future SoC-level integration scope
+├── formal/
+├── scripts/
+├── ci/
+├── reports/
+│   ├── signoff/            # Selected final signoff evidence
+│   └── github_release_audit/
+├── deliverables/           # Release artifact policy and manifests
+└── Makefile
 ```
 
 ## Phân biệt `runs/`, `reports/` và `deliverables/`
@@ -86,3 +83,16 @@ Chỉ chứa artifact cuối từ run đã được review và signoff, ví dụ
 - Gate-level netlist.
 - `.sdf`, `.spef`, `.sdc`.
 - Báo cáo signoff cuối.
+
+## Deferred Scope
+
+The following areas are intentionally not represented as active release
+subsystems:
+
+- standalone bare-metal C/assembly software environment
+- compiled ELF/HEX architectural program regression
+- SoC-level physical implementation with SRAM/macro integration
+- dedicated formal, coverage, and standalone STA report hierarchies
+
+These areas may be developed later, but empty placeholder directories are not
+kept solely to imply future functionality.
