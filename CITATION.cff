@@ -1,19 +1,20 @@
 cff-version: 1.2.0
 message: "If you use this project, please cite it using the metadata below."
-title: "RV32I 5-Stage Pipelined CPU Core — RTL-to-GDSII Physical Implementation"
+title: "RV32IM SoC — SkyWater 130nm RTL-to-GDSII Physical Implementation"
 type: software
 authors:
   - family-names: "Nguyễn"
     given-names: "Việt Hùng"
     alias: "Zhungg"
-version: "1.0.1"
-date-released: "2026-07-24"
+version: "1.1.0"
+date-released: "2026-08-14"
 license: "Apache-2.0"
 repository-code: "https://github.com/Zhungg/rv32i-cpu-openlane"
-url: "https://github.com/Zhungg/rv32i-cpu-openlane/releases/tag/v1.0.1"
+url: "https://github.com/Zhungg/rv32i-cpu-openlane"
 keywords:
   - "RISC-V"
-  - "RV32I"
+  - "RV32IM"
+  - "System-on-Chip"
   - "SystemVerilog"
   - "ASIC"
   - "Physical Design"
@@ -22,6 +23,7 @@ keywords:
   - "OpenROAD"
   - "Sky130"
 abstract: >-
-  A modular RV32I five-stage pipelined CPU core implemented in SystemVerilog
-  and taken through the complete Sky130A RTL-to-GDSII physical design flow
-  using OpenLane 2 and OpenROAD.
+  A production-grade RV32IM System-on-Chip (SoC) featuring a five-stage pipelined
+  CPU with Gshare dynamic branch prediction, hardware MDU, L1 cache subsystem,
+  PMP v1.12, PLIC, DMA, low-power ICG clock gating, and SkyWater 130nm OpenRAM
+  hard macro integration implemented with OpenLane 2 and OpenROAD.

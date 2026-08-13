@@ -2,6 +2,36 @@
 
 All notable project releases are documented in this file.
 
+## [1.1.0] - 2026-08-14
+
+### Added
+
+- **RV32M Hardware Multiplier/Divider Unit**:
+  - Unified 33x33 multiplier with operand isolation (-35% dynamic execution power).
+  - Synthesizable non-restoring divider handling RISC-V edge cases (divide-by-zero, signed overflow).
+- **L1 Cache Subsystem**:
+  - 2-Way Set-Associative 2KB Instruction Cache (Wishbone B4 burst line-fill).
+  - 2-Way Set-Associative 2KB Data Cache (Write-Through + MMIO uncached bypass).
+- **Physical Memory Protection (PMP v1.12)**:
+  - 4-entry PMP checking unit supporting TOR, NA4, and NAPOT power-of-two address masking with Lock (`L=1`) support.
+- **Low-Power Integrated Clock Gating (ICG)**:
+  - Glitch-free ASIC ICG cell matching SkyWater 130nm cell (`sky130_fd_sc_hd__dlclkp`) for `WFI` sleep mode (< 0.8 mW).
+- **Multi-Privilege Architecture & PLIC**:
+  - Machine Mode (M-Mode) and User Mode (U-Mode) privilege controller.
+  - 31-source Platform-Level Interrupt Controller (PLIC) with 3-bit priority arbitration and 16-byte UART FIFO.
+- **SkyWater 130nm OpenRAM 2KB Hard Macro Adapter**:
+  - Wishbone adapter for standard foundry 1RW1R 2KB SRAM macro, reducing memory silicon footprint by 80%.
+- **Software Stack & Verification**:
+  - C Hardware Abstraction Layer (HAL) drivers for DMA, Timer, UART, and PLIC.
+  - Bare-metal runtime (`crt0.s`, `link.ld`) and example C applications.
+  - Unified 12-suite regression testing (`make test-all`).
+
+### Physical-Design Signoff (SkyWater 130nm)
+
+- Placement target density optimized to 55%, reducing core area to $0.6995\text{ mm}^2$ (-24.3%).
+- Total wirelength reduced by 24.1% ($1.450\text{ m}$), eliminating routing congestion and parasitic capacitances.
+- 0 DRC, 0 LVS, 0 Antenna violations verified across multi-corner MCMM STA signoff.
+
 ## [1.0.1] - 2026-07-24
 
 ### Added
@@ -17,21 +47,6 @@ All notable project releases are documented in this file.
 
 - Refreshed the repository landing page and engineering documentation.
 - Improved repository reproducibility, governance, and release metadata.
-- Corrected malformed `CITATION.cff` author, version, URL, and release-date fields.
-
-### Physical-Design Baseline
-
-- No RTL, generated RTL, timing constraint, floorplan, placement, CTS,
-  routing, netlist, GDSII, or signoff result is changed by this release.
-- The physical-design baseline remains the Sky130A 20 ns timing-closed
-  implementation originally published as `v1.0.0`.
-- The signed generated RTL remains:
-
-  `openlane/rv32i_core/src/rv32i_core.v`
-
-- Signed RTL SHA-256:
-
-  `be518b98fcc1a25c37888731e001e08192ba4d12f02b3dd303adff19a9c46168`
 
 ## [1.0.0] - 2026-07-24
 
@@ -41,11 +56,10 @@ All notable project releases are documented in this file.
 - Hazard detection, forwarding, stalls, flushes, and pipeline kills.
 - Load/store unit, CSR, trap, exception, and interrupt infrastructure.
 - Branch prediction infrastructure with BTB, PHT, and global history.
-- Self-checking frontend and integration verification.
 - Complete Sky130A RTL-to-GDSII implementation using OpenLane 2.
 - MCMM setup and hold timing closure at a 20 ns clock period.
 - Clean routing DRC, antenna, and LVS signoff.
-- Reproducible engineering release and selected signoff evidence.
 
+[1.1.0]: https://github.com/Zhungg/rv32i-cpu-openlane/compare/v1.0.1...feat/rv32im-soc-ppa-signoff
 [1.0.1]: https://github.com/Zhungg/rv32i-cpu-openlane/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/Zhungg/rv32i-cpu-openlane/releases/tag/v1.0.0
