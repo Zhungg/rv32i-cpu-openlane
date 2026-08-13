@@ -55,6 +55,10 @@ openlane/*/config.json.*
 openlane/*/src/*.step*
 openlane/*/src/*.stale
 # Local engineering backups
+backup/
+deliverables/layout/*.gds
+deliverables/layout/*.mag
+deliverables/layout/*.def
 Makefile.*
 run_openlane.sh.step*
 scripts/*.before*

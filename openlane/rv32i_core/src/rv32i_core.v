@@ -44,15 +44,16 @@ module rv32i_pht (
 	input wire update_taken_i;
 	localparam [31:0] ENTRY_COUNT = 1 << INDEX_WIDTH;
 	reg [1:0] table_q [0:ENTRY_COUNT - 1];
-	integer reset_index;
 	always @(*) begin
 		read_counter_o = table_q[read_index_i];
 		predict_taken_o = table_q[read_index_i][1];
 	end
 	always @(posedge clk_i or negedge rst_ni)
-		if (!rst_ni)
-			for (reset_index = 0; reset_index < ENTRY_COUNT; reset_index = reset_index + 1)
-				table_q[reset_index] <= 2'b01;
+		if (!rst_ni) begin : sv2v_autoblock_1
+			reg signed [31:0] i;
+			for (i = 0; i < ENTRY_COUNT; i = i + 1)
+				table_q[i] <= 2'b01;
+		end
 		else if (update_valid_i) begin
 			if (update_taken_i) begin
 				if (table_q[update_index_i] != 2'b11)
@@ -92,7 +93,6 @@ module rv32i_btb (
 	wire [TAG_WIDTH - 1:0] read_tag;
 	wire [INDEX_WIDTH - 1:0] update_index;
 	wire [TAG_WIDTH - 1:0] update_tag;
-	integer reset_index;
 	assign read_index = read_pc_i[INDEX_MSB:INDEX_LSB];
 	assign read_tag = read_pc_i[31:INDEX_MSB + 1];
 	assign update_index = update_pc_i[INDEX_MSB:INDEX_LSB];
@@ -102,13 +102,15 @@ module rv32i_btb (
 		target_o = target_q[read_index];
 	end
 	always @(posedge clk_i or negedge rst_ni)
-		if (!rst_ni)
-			for (reset_index = 0; reset_index < ENTRY_COUNT; reset_index = reset_index + 1)
+		if (!rst_ni) begin : sv2v_autoblock_1
+			reg signed [31:0] i;
+			for (i = 0; i < ENTRY_COUNT; i = i + 1)
 				begin
-					valid_q[reset_index] <= 1'b0;
-					tag_q[reset_index] <= 1'sb0;
-					target_q[reset_index] <= 1'sb0;
+					valid_q[i] <= 1'b0;
+					tag_q[i] <= 1'sb0;
+					target_q[i] <= 1'sb0;
 				end
+		end
 		else if (update_valid_i) begin
 			valid_q[update_index] <= 1'b1;
 			tag_q[update_index] <= update_tag;

@@ -149,3 +149,61 @@ generate-openlane-rtl:
 .PHONY: extract-openlane-qor
 extract-openlane-qor:
 	bash scripts/extract_openlane_qor.sh
+
+.PHONY: test-soc
+test-soc:
+	bash scripts/test_soc.sh
+
+.PHONY: test-soc-wb
+test-soc-wb:
+	bash scripts/test_soc_wb.sh
+
+.PHONY: test-mdu
+test-mdu:
+	bash scripts/test_rv32m.sh
+
+.PHONY: test-cache
+test-cache:
+	bash scripts/test_cache.sh
+
+.PHONY: test-pmp
+test-pmp:
+	bash scripts/test_pmp.sh
+
+.PHONY: test-power
+test-power:
+	bash scripts/test_power.sh
+
+.PHONY: test-priv
+test-priv:
+	bash scripts/test_priv.sh
+
+.PHONY: test-plic
+test-plic:
+	bash scripts/test_plic.sh
+
+.PHONY: test-compliance
+test-compliance:
+	bash scripts/test_compliance.sh
+
+.PHONY: test-sram-macro
+test-sram-macro:
+	bash scripts/test_sram_macro.sh
+
+.PHONY: test-all
+test-all:
+	make test-compliance
+	make test-sram-macro
+	make test-plic
+	make test-priv
+	make test-power
+	make test-pmp
+	make test-cache
+	make test-mdu
+	make test-soc-wb
+	make test-soc
+	make test-step7-regression
+	bash scripts/check_structure.sh
+	bash scripts/check_module_hierarchy.sh
+	bash scripts/check_rtl_source_list.sh
+
