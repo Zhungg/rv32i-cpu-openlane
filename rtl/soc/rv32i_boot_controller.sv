@@ -1,24 +1,31 @@
+`timescale 1ns/1ps
 // SPDX-License-Identifier: Apache-2.0
 //
 // File   : rtl/soc/rv32i_boot_controller.sv
 // Module : rv32i_boot_controller
-// Phase  : STEP5
 //
-// RV32I CPU RTL-to-GDSII Project
-//
-// This source file was created during Step 4:
-// Repository and module hierarchy initialization.
-//
-// The synthesizable interface and implementation will be completed
-// during the implementation step indicated above.
-//
-// IMPORTANT:
-// - Do not add this file to config/rtl.f until it contains valid RTL.
-// - Do not infer latches.
-// - Do not create combinational clock logic.
-// - Use definitions from rtl/pkg.
-// - All architectural side effects must be qualified by stage validity.
-//
-// TODO: Define interface.
-// TODO: Implement synthesizable logic.
-// TODO: Add unit-level verification.
+// Reset synchronizer and boot control for rv32i_soc.
+
+module rv32i_boot_controller (
+    input  logic clk_i,
+    input  logic rst_async_ni,
+
+    output logic rst_sync_no,
+    output logic [31:0] boot_vector_o
+);
+
+    logic [1:0] rst_sync_q;
+
+    // Asynchronous assert, synchronous de-assert
+    always_ff @(posedge clk_i or negedge rst_async_ni) begin
+        if (!rst_async_ni) begin
+            rst_sync_q <= 2'b00;
+        end else begin
+            rst_sync_q <= {rst_sync_q[0], 1'b1};
+        end
+    end
+
+    assign rst_sync_no   = rst_sync_q[1];
+    assign boot_vector_o = 32'h0000_0000; // Reset PC vector
+
+endmodule
