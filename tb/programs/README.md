@@ -1,3 +1,12 @@
-# tb/programs
+# CPU Test Programs
 
-Thư mục này thuộc skeleton dự án RV32I. Nội dung cụ thể sẽ được thêm theo milestone tương ứng.
+The current released verification baseline primarily uses self-checking
+SystemVerilog unit and integration testbenches.
+
+A standalone bare-metal software regression flow based on compiled assembly,
+C programs, ELF images, or generated HEX images is not part of the current
+release scope.
+
+Program-based architectural regression may be added in a future development
+phase. Empty `asm/`, `c/`, and `hex/` placeholder directories are intentionally
+not retained.
